@@ -1,0 +1,10 @@
+{
+  "categories": [
+    { "id": "history", "label": "History", "enabled": true },
+    { "id": "nature", "label": "Nature & Geography", "enabled": true },
+    { "id": "science", "label": "Science & Technology", "enabled": true },
+    { "id": "culture", "label": "Culture & Arts", "enabled": true },
+    { "id": "architecture", "label": "Architecture", "enabled": true },
+    { "id": "geology", "label": "Geology", "enabled": true }
+  ]
+}

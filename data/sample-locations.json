@@ -1,0 +1,29 @@
+{
+  "description": "Test locations for development and QA",
+  "locations": [
+    {
+      "label": "Kailua-Kona, HI",
+      "lat": 19.6400,
+      "lon": -155.9969,
+      "expected_pois": ["Huliheʻe Palace", "Mokuaikaua Church", "Kailua Bay"]
+    },
+    {
+      "label": "Mauna Kea Summit, HI",
+      "lat": 19.8207,
+      "lon": -155.4680,
+      "expected_pois": ["Mauna Kea Observatories", "Lake Waiau"]
+    },
+    {
+      "label": "Hawaiʻi Volcanoes National Park",
+      "lat": 19.4194,
+      "lon": -155.2885,
+      "expected_pois": ["Kīlauea", "Thurston Lava Tube", "Halemaʻumaʻu Crater"]
+    },
+    {
+      "label": "ʻIolani Palace, Honolulu",
+      "lat": 21.3069,
+      "lon": -157.8583,
+      "expected_pois": ["ʻIolani Palace", "Aliʻiōlani Hale", "Kawaiahaʻo Church"]
+    }
+  ]
+}

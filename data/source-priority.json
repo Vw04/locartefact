@@ -1,0 +1,8 @@
+{
+  "description": "Priority ranking for data sources used in fact generation",
+  "sources": [
+    { "id": "wikipedia", "label": "Wikipedia GeoSearch", "priority": 1, "notes": "Primary source for nearby notable places" },
+    { "id": "wikidata", "label": "Wikidata", "priority": 2, "notes": "Structured entity enrichment" },
+    { "id": "osm", "label": "OpenStreetMap / Nominatim", "priority": 3, "notes": "Reverse geocoding and geographic context" }
+  ]
+}
