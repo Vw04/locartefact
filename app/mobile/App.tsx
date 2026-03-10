@@ -1,131 +1,107 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Linking,
 } from 'react-native';
+import FactCard from './src/components/FactCard';
+import type { Fact } from './src/types/place';
 import { getCurrentLocation } from './src/services/location';
-import { fetchNearbyWikipediaPlaces, fetchWikipediaSummary } from './src/services/wikipedia';
-import type { WikipediaSummary } from './src/types/place';
+import { fetchNearbyFacts } from './src/services/wikipedia';
+import { rankFacts } from './src/services/ranking';
+import SAMPLE_LOCATIONS from './src/data/sample-locations.json';
 
 export default function App() {
-  const [latitude, setLatitude] = useState<string>('—');
-  const [longitude, setLongitude] = useState<string>('—');
-  const [status, setStatus] = useState<string>('Ready');
+  const [facts, setFacts] = useState<Fact[]>([]);
+  const [status, setStatus] = useState<string>('Tap refresh to discover nearby facts.');
   const [loading, setLoading] = useState<boolean>(false);
-  const [places, setPlaces] = useState<WikipediaSummary[]>([]);
 
-  const refreshNearbyFacts = async () => {
+  const hasLoaded = facts.length > 0 || loading;
+
+  const runWithCoords = async (lat: number, lon: number, label: string) => {
+    setLoading(true);
+    setStatus(`Loading: ${label}`);
     try {
-      setLoading(true);
-      setStatus('Getting current location...');
-
-      const location = await getCurrentLocation();
-
-      setLatitude(location.latitude.toFixed(6));
-      setLongitude(location.longitude.toFixed(6));
-
-      setStatus('Finding nearby places...');
-      
-      const nearbyPlaces = await fetchNearbyWikipediaPlaces(
-        location.latitude,
-        location.longitude
-      );
-
-      setStatus('Fetching summaries...');
-
-const summaries = await Promise.all(
-  nearbyPlaces.slice(0, 3).map(async (place) => {
-    const summary = await fetchWikipediaSummary(place.title);
-
-    return {
-      id: place.id,
-      title: summary.title,
-      summary: summary.summary,
-      url: summary.url,
-      distance: place.distance,
-    };
-  })
-);
-
-setPlaces(summaries);
-setStatus(`Loaded ${summaries.length} facts`);
-
-      setStatus(`Found ${nearbyPlaces.length} nearby places`);
-    } catch (error) {
-      console.error('refreshNearbyFacts failed:', error);
-      setStatus('Failed to load nearby facts');
-      Alert.alert('Error', String(error));
+      const rawFacts = await fetchNearbyFacts(lat, lon);
+      const ranked = rankFacts(rawFacts);
+      setFacts(ranked);
+      setStatus(`${label} — ${ranked.length} facts found`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Something went wrong.';
+      setStatus(message);
+      setFacts([]);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    setStatus('Requesting location…');
+    try {
+      const { latitude, longitude } = await getCurrentLocation();
+      await runWithCoords(latitude, longitude, `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Something went wrong.';
+      setStatus(message);
+      setFacts([]);
       setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Locartefact</Text>
-        <Text style={styles.subtitle}>
-          Discover facts about the world around you.
-        </Text>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={refreshNearbyFacts}
-          disabled={loading}
+      {__DEV__ && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.devBar}
+          contentContainerStyle={styles.devBarContent}
         >
-          {loading ? (
-            <ActivityIndicator />
-          ) : (
-            <Text style={styles.buttonText}>Refresh Nearby Facts</Text>
-          )}
-        </TouchableOpacity>
+          {SAMPLE_LOCATIONS.locations.map((loc) => (
+            <TouchableOpacity
+              key={loc.label}
+              style={styles.devButton}
+              onPress={() => runWithCoords(loc.lat, loc.lon, loc.label)}
+              disabled={loading}
+            >
+              <Text style={styles.devLabel}>{loc.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Status</Text>
-          <Text style={styles.value}>{status}</Text>
-
-          <Text style={styles.label}>Latitude</Text>
-          <Text style={styles.value}>{latitude}</Text>
-
-          <Text style={styles.label}>Longitude</Text>
-          <Text style={styles.value}>{longitude}</Text>
+      <View style={!hasLoaded ? styles.headerWrapperCentered : undefined}>
+        <View style={styles.header}>
+          <Text style={styles.appTitle}>Locartefact</Text>
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleRefresh}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Refresh Nearby Facts</Text>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.status}>{status}</Text>
         </View>
+      </View>
 
+      {hasLoaded && (
         <FlatList
-          data={places}
+          data={facts}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.placeCard}
-              onPress={() => Linking.openURL(item.url)}
-            >
-              <Text style={styles.placeTitle}>{item.title}</Text>
-              <Text style={styles.placeMeta}>
-                {Math.round(item.distance)} m away
-              </Text>
-              <Text style={styles.placeSummary}>
-                {item.summary}
-              </Text>
-              <Text style={styles.placeLink}>Open source</Text>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            !loading ? (
-              <Text style={styles.emptyText}>
-                No nearby places loaded yet.
-              </Text>
-            ) : null
-          }
+          renderItem={({ item }) => <FactCard fact={item} />}
         />
-      </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -133,88 +109,71 @@ setStatus(`Loaded ${summaries.length} facts`);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#202C1F',
   },
-  content: {
+  devBar: {
+    flexGrow: 0,
+    flexShrink: 0,
+    backgroundColor: '#0a1a0a',
+  },
+  devBarContent: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  devButton: {
+    backgroundColor: '#1a3a1a',
+    borderWidth: 1,
+    borderColor: '#4a7a4a',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  devLabel: {
+    fontFamily: 'Helvetica',
+    fontSize: 11,
+    color: '#88cc88',
+  },
+  headerWrapperCentered: {
     flex: 1,
-    padding: 24,
-    paddingTop: 60,
+    justifyContent: 'center',
   },
-  title: {
-    fontSize: 34,
+  header: {
+    padding: 20,
+    paddingTop: 12,
+  },
+  appTitle: {
+    fontFamily: 'Helvetica',
+    fontSize: 28,
     fontWeight: '700',
-    marginBottom: 8,
     textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
+    marginBottom: 16,
+    color: '#FFFFF0',
   },
   button: {
-    backgroundColor: '#111',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    backgroundColor: '#374635',
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   buttonText: {
+    fontFamily: 'Helvetica',
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 10,
-  },
-  value: {
-    fontSize: 16,
-    color: '#111',
-    marginTop: 4,
+  status: {
+    fontFamily: 'Helvetica',
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   list: {
+    paddingHorizontal: 20,
     paddingBottom: 40,
-  },
-  placeCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-  },
-  placeTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  placeMeta: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 6,
-  },
-  placeSummary: {
-  fontSize: 14,
-  color: '#333',
-  marginTop: 6,
-  lineHeight: 20,
-  },
-  placeLink: {
-    fontSize: 14,
-    color: '#0a66c2',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    marginTop: 24,
   },
 });

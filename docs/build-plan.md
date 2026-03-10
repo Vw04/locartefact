@@ -1,55 +1,52 @@
 # Build Plan
 
-## Milestones
+## Milestone 1 — Content Loop (Phase 1)
+**Done when:** You open the app, tap "Refresh", and see 3–5 relevant, interesting facts about your current location.
 
-### Milestone 1 — Content Loop (Manual Refresh)
-Open Locartefact → tap "Refresh Nearby Facts" → see 3–5 relevant facts in the feed based on current location. No background tracking, no notifications.
+| Step | Task | Packages to Install |
+|------|------|---------------------|
+| 1.1 | Build single-screen UI: Refresh button + scrollable fact list | — |
+| 1.2 | Add location permission request + current coordinates fetch | expo-location |
+| 1.3 | Implement Wikipedia GeoSearch → TextExtracts pipeline | — |
+| 1.4 | Add Nominatim reverse geocode fallback for sparse areas | — |
+| 1.5 | Add basic ranking (distance + extract length) | — |
+| 1.6 | Display top 5 ranked facts in the feed | — |
 
-### Milestone 2 — On-Device Install
-Install Locartefact on iPhone from Xcode. Confirm manual location refresh works on the physical device.
+Test with sample-locations.json coordinates in simulator before moving on.
 
-### Milestone 3 — First Background Fact
-Turn on tracking, background the app, and receive at least one valid location-based fact notification.
+## Milestone 2 — On-Device Install (Phase 2)
+**Done when:** Locartefact is on your iPhone, you tap Refresh anywhere, and see real facts. Facts persist between app sessions.
 
-## Build Sequence
+| Step | Task | Packages to Install |
+|------|------|---------------------|
+| 2.1 | Run `npx expo prebuild --platform ios`, open in Xcode, sign + build to device | — |
+| 2.2 | Test location fetch on physical iPhone (indoors + outdoors) | — |
+| 2.3 | Create Supabase project + fact_feed table | @supabase/supabase-js |
+| 2.4 | Save delivered facts to Supabase on each refresh | — |
+| 2.5 | Load fact feed from Supabase on app open | — |
+| 2.6 | Add delivery_history table for deduplication | — |
 
-| Step | Task | Phase |
-|------|------|-------|
-| 1 | Scaffold Expo app (TypeScript) | Phase 0 |
-| 2 | Create Home / Feed / Settings navigation | Phase 1 |
-| 3 | Add location permission + current location fetch | Phase 1 |
-| 4 | Add nearby fact discovery (Wikipedia GeoSearch) | Phase 1 |
-| 5 | Add fact ranking logic | Phase 1 |
-| 6 | Build feed UI | Phase 1 |
-| 7 | Add Supabase persistence | Phase 1 |
-| 8 | Install on iPhone from Xcode (dev build) | Phase 2 |
-| 9 | Add local notifications | Phase 3 |
-| 10 | Add tracking sessions + stationary cadence | Phase 3 |
+## Milestone 3 — Background Fact Delivery (Phase 3)
+**Done when:** You toggle tracking on, put the phone in your pocket, and receive a notification about a nearby place.
 
-## Development Phases
+| Step | Task | Packages to Install |
+|------|------|---------------------|
+| 3.1 | Add tracking toggle to Home screen | expo-task-manager |
+| 3.2 | Register background location task (trigger on ~200m movement) | — |
+| 3.3 | Implement local notifications for background facts | expo-notifications |
+| 3.4 | Build session engine (location_sessions table) | — |
+| 3.5 | Add stationary cadence: 1 fact/min, max 5/session | — |
+| 3.6 | Session ends on movement >500m from center | — |
 
-### Phase 0 — Project Setup ← CURRENT
-- Create repo structure and docs
-- Scaffold Expo app
-- Set up Supabase project (tables only, no functions yet)
+## Milestone 4 — Navigation + Polish (Phase 4)
+**Done when:** App has proper tabs, settings work, and notifications feel helpful (not spammy) during a real drive.
 
-### Phase 1 — Nearby Facts Prototype
-- Manual location fetch → Wikipedia GeoSearch → ranked facts → feed UI
-- Prove that the content loop works before adding background behavior
-
-### Phase 2 — iPhone Deployment
-- Create Expo development build
-- Install on physical iPhone via Xcode
-- Test location permissions on-device
-
-### Phase 3 — Background Fact Engine
-- Background location tracking
-- Local notifications
-- Session logic + stationary cadence
-- Deduplication
-
-### Phase 4 — Quality Tuning
-- Ranking weight adjustments
-- POI filtering improvements
-- Geographic context enrichment
-- Notification copy polish
+| Step | Task |
+|------|------|
+| 4.1 | Add tab navigation: Home / Feed / Settings |
+| 4.2 | Build Settings screen (radius, cadence, quiet hours) |
+| 4.3 | Add user_settings table in Supabase |
+| 4.4 | Add saved/favorited facts feature |
+| 4.5 | Improve ranking with Wikidata notability signals |
+| 4.6 | Add geographic context fallback for sparse areas |
+| 4.7 | Tune anti-spam thresholds in real scenarios |

@@ -1,67 +1,146 @@
-import { NearbyPlace } from '../types/place';
+import type { Fact } from '../types/place';
 
-type WikipediaGeoSearchResponse = {
-  query?: {
-    geosearch?: Array<{
-      pageid: number;
-      title: string;
-      lat: number;
-      lon: number;
-      dist: number;
-    }>;
-  };
+const WIKI_API = 'https://en.wikipedia.org/w/api.php';
+
+type GeoSearchEntry = {
+  pageid: number;
+  title: string;
+  lat: number;
+  lon: number;
+  dist: number;
 };
 
-export async function fetchNearbyWikipediaPlaces(
-  latitude: number,
-  longitude: number
-): Promise<NearbyPlace[]> {
+type PageData = {
+  pageid: number;
+  title: string;
+  extract?: string;
+  thumbnail?: { source: string };
+  coordinates?: Array<{ lat: number; lon: number }>;
+};
+
+const RADIUS_STEPS = [10000, 25000, 50000];
+
+async function geoSearch(lat: number, lon: number, radius: number): Promise<GeoSearchEntry[]> {
   const params = new URLSearchParams({
     action: 'query',
     list: 'geosearch',
-    gscoord: `${latitude}|${longitude}`,
-    gsradius: '10000',
-    gslimit: '10',
+    gscoord: `${lat}|${lon}`,
+    gsradius: String(radius),
+    gslimit: '100',
     format: 'json',
     origin: '*',
   });
+  const res = await fetch(`${WIKI_API}?${params}`);
+  if (!res.ok) throw new Error(`GeoSearch failed: ${res.status}`);
+  const data = await res.json();
+  return data.query?.geosearch ?? [];
+}
 
-  const response = await fetch(`https://en.wikipedia.org/w/api.php?${params.toString()}`);
+async function nominatimFallback(lat: number, lon: number): Promise<GeoSearchEntry[]> {
+  const revRes = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+    { headers: { 'User-Agent': 'Locartefact/1.0' } }
+  );
+  if (!revRes.ok) return [];
+  const revData = await revRes.json();
+  const addr = revData.address ?? {};
+  const areaName =
+    addr.city ?? addr.town ?? addr.village ?? addr.county ?? addr.state ?? '';
+  if (!areaName) return [];
 
-  if (!response.ok) {
-    throw new Error(`Wikipedia request failed: ${response.status}`);
-  }
+  const params = new URLSearchParams({
+    action: 'query',
+    list: 'search',
+    srsearch: areaName,
+    srlimit: '10',
+    format: 'json',
+    origin: '*',
+  });
+  const searchRes = await fetch(`${WIKI_API}?${params}`);
+  if (!searchRes.ok) return [];
+  const searchData = await searchRes.json();
+  const results: Array<{ pageid: number; title: string }> =
+    searchData.query?.search ?? [];
 
-  const data: WikipediaGeoSearchResponse = await response.json();
-
-  const places = data.query?.geosearch ?? [];
-
-  return places.map((place) => ({
-    id: place.pageid,
-    pageId: place.pageid,
-    title: place.title,
-    distance: place.dist,
-    latitude: place.lat,
-    longitude: place.lon,
-    url: `https://en.wikipedia.org/?curid=${place.pageid}`,
+  return results.map((r) => ({
+    pageid: r.pageid,
+    title: r.title,
+    lat,
+    lon,
+    dist: 0,
   }));
 }
-export async function fetchWikipediaSummary(title: string) {
-  const encodedTitle = encodeURIComponent(title);
 
-  const response = await fetch(
-    `https://en.wikipedia.org/api/rest_v1/page/summary/${encodedTitle}`
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch summary: ${response.status}`);
+async function fetchPageDetails(pageIds: number[]): Promise<Record<number, PageData>> {
+  const chunks: number[][] = [];
+  for (let i = 0; i < pageIds.length; i += 20) {
+    chunks.push(pageIds.slice(i, i + 20));
   }
 
-  const data = await response.json();
+  const allPages: Record<number, PageData> = {};
 
-  return {
-    title: data.title,
-    summary: data.extract,
-    url: data.content_urls?.desktop?.page,
-  };
+  for (const chunk of chunks) {
+    const params = new URLSearchParams({
+      action: 'query',
+      pageids: chunk.join('|'),
+      prop: 'extracts|pageimages|coordinates',
+      exintro: 'true',
+      explaintext: 'true',
+      exsentences: '3',
+      pithumbsize: '200',
+      format: 'json',
+      origin: '*',
+    });
+    const res = await fetch(`${WIKI_API}?${params}`);
+    if (!res.ok) continue;
+    const data = await res.json();
+    const pages: Record<string, PageData> = data.query?.pages ?? {};
+    for (const page of Object.values(pages)) {
+      allPages[page.pageid] = page;
+    }
+  }
+
+  return allPages;
+}
+
+export async function fetchNearbyFacts(lat: number, lon: number): Promise<Fact[]> {
+  let geoEntries: GeoSearchEntry[] = [];
+  for (const radius of RADIUS_STEPS) {
+    geoEntries = await geoSearch(lat, lon, radius);
+    if (geoEntries.length >= 5) break;
+  }
+
+  let fallbackEntries: GeoSearchEntry[] = [];
+  if (geoEntries.length < 3) {
+    fallbackEntries = await nominatimFallback(lat, lon);
+  }
+
+  const seen = new Set<number>();
+  const entries = [...geoEntries, ...fallbackEntries].filter((e) => {
+    if (seen.has(e.pageid)) return false;
+    seen.add(e.pageid);
+    return true;
+  });
+  if (entries.length === 0) return [];
+
+  const geoPageIds = new Set(geoEntries.map((e) => e.pageid));
+  const pageIds = entries.map((e) => e.pageid);
+  const pageDetails = await fetchPageDetails(pageIds);
+
+  return entries.map((entry, idx) => {
+    const page = pageDetails[entry.pageid];
+    const wikiCoords = !geoPageIds.has(entry.pageid) ? page?.coordinates?.[0] : undefined;
+    return {
+      id: idx,
+      pageId: entry.pageid,
+      title: page?.title ?? entry.title,
+      extract: page?.extract ?? '',
+      distance: entry.dist,
+      lat: wikiCoords?.lat ?? entry.lat,
+      lon: wikiCoords?.lon ?? entry.lon,
+      hasGeoData: geoPageIds.has(entry.pageid) || !!wikiCoords,
+      sourceUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(page?.title ?? entry.title)}`,
+      thumbnail: page?.thumbnail?.source,
+    };
+  });
 }

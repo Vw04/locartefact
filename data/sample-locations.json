@@ -24,6 +24,30 @@
       "lat": 21.3069,
       "lon": -157.8583,
       "expected_pois": ["ʻIolani Palace", "Aliʻiōlani Hale", "Kawaiahaʻo Church"]
+    },
+    {
+      "label": "Remote HI Saddle Rd",
+      "lat": 19.7200,
+      "lon": -155.5200,
+      "note": "Sparse — expect Nominatim fallback, at least 1 area-level fact"
+    },
+    {
+      "label": "Manhattan",
+      "lat": 40.7580,
+      "lon": -73.9855,
+      "note": "Dense — expect several nearby facts"
+    },
+    {
+      "label": "Westminster, London",
+      "lat": 51.5014,
+      "lon": -0.1419,
+      "note": "Dense — expect several nearby facts"
+    },
+    {
+      "label": "Rural Wyoming",
+      "lat": 43.0760,
+      "lon": -107.2903,
+      "note": "Sparse — expect Nominatim fallback, at least 1 result"
     }
   ]
 }

@@ -1,3 +1,5 @@
+> **Implementation phase:** Phase 3. Do not implement notifications until Milestones 1 and 2 are complete. The manual refresh prototype must work first.
+
 # Notification Policy
 
 ## Delivery Rules

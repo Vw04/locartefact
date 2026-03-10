@@ -1,0 +1,45 @@
+{
+  "description": "Test locations for development and QA",
+  "locations": [
+    {
+      "label": "Kailua-Kona, HI",
+      "lat": 19.6400,
+      "lon": -155.9969
+    },
+    {
+      "label": "Mauna Kea Summit, HI",
+      "lat": 19.8207,
+      "lon": -155.4680
+    },
+    {
+      "label": "Hawaiʻi Volcanoes NP",
+      "lat": 19.4194,
+      "lon": -155.2885
+    },
+    {
+      "label": "ʻIolani Palace, HNL",
+      "lat": 21.3069,
+      "lon": -157.8583
+    },
+    {
+      "label": "Remote HI Saddle Rd",
+      "lat": 19.7200,
+      "lon": -155.5200
+    },
+    {
+      "label": "Manhattan",
+      "lat": 40.7580,
+      "lon": -73.9855
+    },
+    {
+      "label": "Westminster, London",
+      "lat": 51.5014,
+      "lon": -0.1419
+    },
+    {
+      "label": "Rural Wyoming",
+      "lat": 43.0760,
+      "lon": -107.2903
+    }
+  ]
+}

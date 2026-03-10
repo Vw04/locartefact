@@ -1,4 +1,5 @@
 {
+  "_note": "Category filtering is deferred to Phase 4. Wikipedia GeoSearch does not return categories natively. Classification would require additional Wikidata API calls. For now, all facts are shown regardless of category.",
   "categories": [
     { "id": "history", "label": "History", "enabled": true },
     { "id": "nature", "label": "Nature & Geography", "enabled": true },
