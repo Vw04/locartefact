@@ -1,42 +1,67 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
-import * as Location from 'expo-location';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Linking,
+} from 'react-native';
+import { getCurrentLocation } from './src/services/location';
+import { fetchNearbyWikipediaPlaces, fetchWikipediaSummary } from './src/services/wikipedia';
+import type { WikipediaSummary } from './src/types/place';
 
 export default function App() {
   const [latitude, setLatitude] = useState<string>('—');
   const [longitude, setLongitude] = useState<string>('—');
   const [status, setStatus] = useState<string>('Ready');
   const [loading, setLoading] = useState<boolean>(false);
+  const [places, setPlaces] = useState<WikipediaSummary[]>([]);
 
-  const getCurrentLocation = async () => {
+  const refreshNearbyFacts = async () => {
     try {
       setLoading(true);
-      setStatus('Requesting location permission...');
+      setStatus('Getting current location...');
 
-      const { status: permissionStatus } = await Location.requestForegroundPermissionsAsync();
+      const location = await getCurrentLocation();
 
-      if (permissionStatus !== 'granted') {
-        setStatus('Location permission denied');
-        Alert.alert(
-          'Location Permission Needed',
-          'Locartefact needs location access to find nearby facts.'
-        );
-        return;
-      }
+      setLatitude(location.latitude.toFixed(6));
+      setLongitude(location.longitude.toFixed(6));
 
-      setStatus('Fetching current location...');
+      setStatus('Finding nearby places...');
+      
+      const nearbyPlaces = await fetchNearbyWikipediaPlaces(
+        location.latitude,
+        location.longitude
+      );
 
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      setStatus('Fetching summaries...');
 
-      setLatitude(location.coords.latitude.toFixed(6));
-      setLongitude(location.coords.longitude.toFixed(6));
-      setStatus('Location fetched successfully');
+const summaries = await Promise.all(
+  nearbyPlaces.slice(0, 3).map(async (place) => {
+    const summary = await fetchWikipediaSummary(place.title);
+
+    return {
+      id: place.id,
+      title: summary.title,
+      summary: summary.summary,
+      url: summary.url,
+      distance: place.distance,
+    };
+  })
+);
+
+setPlaces(summaries);
+setStatus(`Loaded ${summaries.length} facts`);
+
+      setStatus(`Found ${nearbyPlaces.length} nearby places`);
     } catch (error) {
-      console.error(error);
-      setStatus('Failed to fetch location');
-      Alert.alert('Error', 'Could not get your current location.');
+      console.error('refreshNearbyFacts failed:', error);
+      setStatus('Failed to load nearby facts');
+      Alert.alert('Error', String(error));
     } finally {
       setLoading(false);
     }
@@ -47,10 +72,14 @@ export default function App() {
       <View style={styles.content}>
         <Text style={styles.title}>Locartefact</Text>
         <Text style={styles.subtitle}>
-          Turn on location and discover facts about the world around you.
+          Discover facts about the world around you.
         </Text>
 
-        <TouchableOpacity style={styles.button} onPress={getCurrentLocation} disabled={loading}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={refreshNearbyFacts}
+          disabled={loading}
+        >
           {loading ? (
             <ActivityIndicator />
           ) : (
@@ -68,6 +97,34 @@ export default function App() {
           <Text style={styles.label}>Longitude</Text>
           <Text style={styles.value}>{longitude}</Text>
         </View>
+
+        <FlatList
+          data={places}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.placeCard}
+              onPress={() => Linking.openURL(item.url)}
+            >
+              <Text style={styles.placeTitle}>{item.title}</Text>
+              <Text style={styles.placeMeta}>
+                {Math.round(item.distance)} m away
+              </Text>
+              <Text style={styles.placeSummary}>
+                {item.summary}
+              </Text>
+              <Text style={styles.placeLink}>Open source</Text>
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            !loading ? (
+              <Text style={styles.emptyText}>
+                No nearby places loaded yet.
+              </Text>
+            ) : null
+          }
+        />
       </View>
     </SafeAreaView>
   );
@@ -81,7 +138,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
-    justifyContent: 'center',
+    paddingTop: 60,
   },
   title: {
     fontSize: 34,
@@ -93,7 +150,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#555',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     lineHeight: 22,
   },
   button: {
@@ -102,7 +159,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   buttonText: {
     color: '#fff',
@@ -113,11 +170,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginBottom: 20,
   },
   label: {
     fontSize: 13,
@@ -129,5 +182,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#111',
     marginTop: 4,
+  },
+  list: {
+    paddingBottom: 40,
+  },
+  placeCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+  },
+  placeTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  placeMeta: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 6,
+  },
+  placeSummary: {
+  fontSize: 14,
+  color: '#333',
+  marginTop: 6,
+  lineHeight: 20,
+  },
+  placeLink: {
+    fontSize: 14,
+    color: '#0a66c2',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    marginTop: 24,
   },
 });
