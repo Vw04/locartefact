@@ -1,6 +1,6 @@
 import type { Fact } from '../types/place';
 
-export function rankFacts(facts: Fact[]): Fact[] {
+export function rankFacts(facts: Fact[], maxResults = 10): Fact[] {
   const filtered = facts.filter(
     (f) => f.extract.length >= 50 && !f.title.includes('(disambiguation)')
   );
@@ -15,5 +15,5 @@ export function rankFacts(facts: Fact[]): Fact[] {
 
   scored.sort((a, b) => b.score - a.score);
 
-  return scored.slice(0, 5).map((s) => s.fact);
+  return scored.slice(0, maxResults).map((s) => s.fact);
 }

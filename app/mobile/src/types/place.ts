@@ -21,6 +21,7 @@ export type Fact = {
   pageId: number;
   title: string;
   extract: string;
+  synthesizedFacts?: string[];
   distance: number;
   sourceUrl: string;
   lat: number;

@@ -20,6 +20,9 @@ type PageData = {
 
 const RADIUS_STEPS = [10000, 25000, 50000];
 
+const factCache = new Map<string, { facts: Fact[]; ts: number }>();
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
 async function geoSearch(lat: number, lon: number, radius: number): Promise<GeoSearchEntry[]> {
   const params = new URLSearchParams({
     action: 'query',
@@ -39,7 +42,7 @@ async function geoSearch(lat: number, lon: number, radius: number): Promise<GeoS
 async function nominatimFallback(lat: number, lon: number): Promise<GeoSearchEntry[]> {
   const revRes = await fetch(
     `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-    { headers: { 'User-Agent': 'Locartefact/1.0' } }
+    { headers: { 'User-Agent': 'Geolore/1.0' } }
   );
   if (!revRes.ok) return [];
   const revData = await revRes.json();
@@ -86,7 +89,7 @@ async function fetchPageDetails(pageIds: number[]): Promise<Record<number, PageD
       prop: 'extracts|pageimages|coordinates',
       exintro: 'true',
       explaintext: 'true',
-      exsentences: '3',
+      exsentences: '10',
       pithumbsize: '200',
       format: 'json',
       origin: '*',
@@ -104,6 +107,13 @@ async function fetchPageDetails(pageIds: number[]): Promise<Record<number, PageD
 }
 
 export async function fetchNearbyFacts(lat: number, lon: number): Promise<Fact[]> {
+  const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  const cached = factCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    console.log(`[cache] hit for ${cacheKey}`);
+    return cached.facts;
+  }
+
   let geoEntries: GeoSearchEntry[] = [];
   for (const radius of RADIUS_STEPS) {
     geoEntries = await geoSearch(lat, lon, radius);
@@ -127,7 +137,7 @@ export async function fetchNearbyFacts(lat: number, lon: number): Promise<Fact[]
   const pageIds = entries.map((e) => e.pageid);
   const pageDetails = await fetchPageDetails(pageIds);
 
-  return entries.map((entry, idx) => {
+  const facts = entries.map((entry, idx) => {
     const page = pageDetails[entry.pageid];
     const wikiCoords = !geoPageIds.has(entry.pageid) ? page?.coordinates?.[0] : undefined;
     return {
@@ -143,4 +153,27 @@ export async function fetchNearbyFacts(lat: number, lon: number): Promise<Fact[]
       thumbnail: page?.thumbnail?.source,
     };
   });
+
+  factCache.set(cacheKey, { facts, ts: Date.now() });
+  return facts;
+}
+
+export async function reverseGeocodeLabel(lat: number, lon: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`,
+      { headers: { 'User-Agent': 'Geolore/1.0' } }
+    );
+    if (!res.ok) return '';
+    const data = await res.json();
+    const addr = data.address ?? {};
+    const sub = addr.neighbourhood ?? addr.suburb ?? '';
+    const city = addr.city ?? addr.town ?? addr.village ?? addr.county ?? '';
+    const region = addr.state ?? '';
+    if (sub && city) return `${sub}, ${city}`;
+    if (city && region) return `${city}, ${region}`;
+    return city || region || '';
+  } catch {
+    return '';
+  }
 }
