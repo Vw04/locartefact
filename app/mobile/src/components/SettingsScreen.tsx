@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import BrandLogo from './BrandLogo';
 import type { NotifSettings } from '../services/keystore';
+import { startWalkAround, stopWalkAround, isWalkAroundRunning } from '../services/walkAround';
 
 const ALL_INTERESTS = [
   'History', 'Science & Tech', 'Arts & Culture', 'Music',
@@ -37,6 +39,30 @@ type Props = {
 export default function SettingsScreen({ visible, interests, notifSettings, onSave, onClose }: Props) {
   const [selectedInterests, setSelectedInterests] = useState<string[]>(interests);
   const [notif, setNotif] = useState<NotifSettings>(notifSettings);
+
+  // Sync toggle with actual OS walk-around state when modal opens
+  useEffect(() => {
+    if (visible) {
+      setSelectedInterests(interests);
+      setNotif(notifSettings);
+      isWalkAroundRunning().then((running) => {
+        setNotif((prev) => ({ ...prev, enabled: running }));
+      });
+    }
+  }, [visible, interests, notifSettings]);
+
+  const handleWalkAroundToggle = async (val: boolean) => {
+    if (val) {
+      const { started, reason } = await startWalkAround();
+      if (!started) {
+        Alert.alert('Permission Required', reason ?? 'Could not start walk-around mode.');
+        return;
+      }
+    } else {
+      await stopWalkAround();
+    }
+    setNotif((prev) => ({ ...prev, enabled: val }));
+  };
 
   const toggleInterest = (label: string) => {
     if (label === 'All') { setSelectedInterests(['All']); return; }
@@ -83,7 +109,7 @@ export default function SettingsScreen({ visible, interests, notifSettings, onSa
             <Text style={styles.rowLabel}>Walk-around mode</Text>
             <Switch
               value={notif.enabled}
-              onValueChange={(val) => setNotif({ ...notif, enabled: val })}
+              onValueChange={handleWalkAroundToggle}
               trackColor={{ false: '#1E5038', true: '#2A9D8F' }}
               thumbColor="#FFFFF0"
             />

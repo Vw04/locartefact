@@ -27,6 +27,7 @@ import type { NotifSettings } from './src/services/keystore';
 import { fetchNearbyFacts, reverseGeocodeLabel } from './src/services/wikipedia';
 import { rankFacts } from './src/services/ranking';
 import { synthesizeFacts } from './src/services/synthesis';
+import * as Notifications from 'expo-notifications';
 import SAMPLE_LOCATIONS from './src/data/sample-locations.json';
 
 const DEV_CITY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
@@ -46,7 +47,7 @@ export default function App() {
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [factCount, setFactCount] = useState<number | null>(null);
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
-  const [onboardingStep, setOnboardingStep] = useState<'welcome' | 'apikey' | 'interests' | null>(null);
+  const [onboardingStep, setOnboardingStep] = useState<'checking' | 'welcome' | 'apikey' | 'interests' | null>('checking');
   const [interests, setInterests] = useState<string[]>(['All']);
   const [showSettings, setShowSettings] = useState(false);
   const [notifSettings, setNotifState] = useState<NotifSettings>({ enabled: false, frequencyMs: 300000, bulletCount: 2 });
@@ -61,6 +62,13 @@ export default function App() {
         setOnboardingStep('welcome');
       }
     });
+
+    // Handle notification taps — bring app to foreground on main screen
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      setShowSettings(false);
+      setOnboardingStep(null);
+    });
+    return () => sub.remove();
   }, []);
 
   // Recompute factCount whenever radius or facts change
@@ -139,6 +147,9 @@ export default function App() {
     setShowSettings(false);
   };
 
+  if (onboardingStep === 'checking') {
+    return <View style={{ flex: 1, backgroundColor: '#0D2218' }} />;
+  }
   if (onboardingStep === 'welcome') {
     return <WelcomeScreen onNext={() => setOnboardingStep('apikey')} />;
   }
@@ -158,6 +169,12 @@ export default function App() {
           style={styles.devBar}
           contentContainerStyle={styles.devBarContent}
         >
+          <TouchableOpacity
+            style={[styles.devButton, { backgroundColor: '#2a1a0a', borderColor: '#cc8844' }]}
+            onPress={() => setOnboardingStep('welcome')}
+          >
+            <Text style={[styles.devLabel, { color: '#ffbb66' }]}>↩ Onboarding</Text>
+          </TouchableOpacity>
           {SAMPLE_LOCATIONS.locations.map((loc) => {
             const c = DEV_CITY_COLORS[loc.label];
             return (
