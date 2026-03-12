@@ -162,12 +162,6 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsBtn}>
-        <View style={styles.menuLine} />
-        <View style={styles.menuLine} />
-        <View style={styles.menuLine} />
-      </TouchableOpacity>
-
       {__DEV__ && (
         <ScrollView
           horizontal
@@ -197,54 +191,60 @@ export default function App() {
         </ScrollView>
       )}
 
-      <View style={!hasLoaded ? styles.headerWrapperCentered : undefined}>
-        <View style={styles.header}>
-          <View style={styles.titleRow}>
-            <BrandLogo size="xl" />
-          </View>
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Refresh Nearby Facts</Text>
-            )}
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <BrandLogo size={hasLoaded ? 'md' : 'xl'} />
+          <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsBtn}>
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
           </TouchableOpacity>
-          {currentCoords && factCount !== null ? (
-            <TouchableOpacity
-              onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${currentCoords.lat},${currentCoords.lon}`)}
-            >
-              <Text style={styles.statusCoords}>
-                {locationLabel ? `${locationLabel} — ` : ''}{currentCoords.lat.toFixed(5)}, {currentCoords.lon.toFixed(5)} — {factCount} facts found
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <Text style={styles.status}>{status}</Text>
-          )}
-          {hasLoaded && (
-            <View style={styles.sliderContainer}>
-              <Text style={styles.sliderLabel}>Radius: {radiusLabel}</Text>
-              <View style={styles.sliderRow}>
-                <Text style={styles.sliderEndLabel}>0 m</Text>
-                <Slider
-                  style={styles.slider}
-                  minimumValue={0}
-                  maximumValue={10000}
-                  step={100}
-                  value={radius}
-                  onValueChange={setRadius}
-                  minimumTrackTintColor="#2A9D8F"
-                  maximumTrackTintColor="#1E5038"
-                  thumbTintColor="#FFFFF0"
-                />
-                <Text style={styles.sliderEndLabel}>10 km</Text>
-              </View>
-            </View>
-          )}
         </View>
+      </View>
+
+      <View style={!hasLoaded ? styles.contentCentered : styles.contentNormal}>
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleRefresh}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Refresh Nearby Facts</Text>
+          )}
+        </TouchableOpacity>
+        {currentCoords && factCount !== null ? (
+          <TouchableOpacity
+            onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${currentCoords.lat},${currentCoords.lon}`)}
+          >
+            <Text style={styles.statusCoords}>
+              {locationLabel ? `${locationLabel} — ` : ''}{currentCoords.lat.toFixed(5)}, {currentCoords.lon.toFixed(5)} — {factCount} facts found
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.status}>{status}</Text>
+        )}
+        {hasLoaded && (
+          <View style={styles.sliderContainer}>
+            <Text style={styles.sliderLabel}>Radius: {radiusLabel}</Text>
+            <View style={styles.sliderRow}>
+              <Text style={styles.sliderEndLabel}>0 m</Text>
+              <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={10000}
+                step={100}
+                value={radius}
+                onValueChange={setRadius}
+                minimumTrackTintColor="#2A9D8F"
+                maximumTrackTintColor="#1E5038"
+                thumbTintColor="#FFFFF0"
+              />
+              <Text style={styles.sliderEndLabel}>10 km</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {hasLoaded && (
@@ -295,25 +295,31 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#88cc88',
   },
-  headerWrapperCentered: {
-    flex: 1,
-    justifyContent: 'center',
-  },
   header: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 12,
+    paddingBottom: 4,
   },
   titleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    marginBottom: 0,
   },
   settingsBtn: {
-    position: 'absolute',
-    right: 20,
-    top: 12,
-    zIndex: 10,
     padding: 8,
     gap: 4,
+  },
+  contentCentered: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  contentNormal: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   menuLine: {
     width: 20,
