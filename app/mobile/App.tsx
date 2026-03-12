@@ -193,7 +193,7 @@ export default function App() {
 
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <BrandLogo size={hasLoaded ? 'md' : 'xl'} />
+          {hasLoaded && <BrandLogo size="md" />}
           <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsBtn}>
             <View style={styles.menuLine} />
             <View style={styles.menuLine} />
@@ -203,6 +203,11 @@ export default function App() {
       </View>
 
       <View style={!hasLoaded ? styles.contentCentered : styles.contentNormal}>
+        {!hasLoaded && (
+          <View style={styles.logoCenter}>
+            <BrandLogo size="xl" />
+          </View>
+        )}
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleRefresh}
@@ -301,14 +306,24 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   titleRow: {
-    flexDirection: 'row',
+    position: 'relative',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 0,
+    minHeight: 36,
   },
   settingsBtn: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
     padding: 8,
     gap: 4,
+  },
+  logoCenter: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   contentCentered: {
     flex: 1,
@@ -325,7 +340,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 2,
     borderRadius: 1,
-    backgroundColor: 'rgba(255,255,240,0.5)',
+    backgroundColor: '#FFFFF0',
   },
   button: {
     backgroundColor: '#1A3828',
