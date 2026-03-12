@@ -1,9 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type NotifSettings = {
+  enabled: boolean;
+  frequencyMs: 60000 | 300000 | 600000 | 1800000;
+  bulletCount: 1 | 2 | 3;
+};
+
+const NOTIF_DEFAULTS: NotifSettings = {
+  enabled: false,
+  frequencyMs: 300000,
+  bulletCount: 2,
+};
+
 const KEYS = {
   apiKey: 'anthropic_api_key',
   onboardingComplete: 'onboarding_complete',
   userInterests: 'user_interests',
+  notifSettings: 'notif_settings',
 };
 
 export async function getApiKey(): Promise<string | null> {
@@ -35,4 +48,14 @@ export async function getUserInterests(): Promise<string[]> {
 
 export async function setUserInterests(interests: string[]): Promise<void> {
   return AsyncStorage.setItem(KEYS.userInterests, JSON.stringify(interests));
+}
+
+export async function getNotifSettings(): Promise<NotifSettings> {
+  const val = await AsyncStorage.getItem(KEYS.notifSettings);
+  if (!val) return { ...NOTIF_DEFAULTS };
+  try { return { ...NOTIF_DEFAULTS, ...JSON.parse(val) }; } catch { return { ...NOTIF_DEFAULTS }; }
+}
+
+export async function setNotifSettings(s: NotifSettings): Promise<void> {
+  return AsyncStorage.setItem(KEYS.notifSettings, JSON.stringify(s));
 }

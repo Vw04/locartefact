@@ -68,10 +68,10 @@ export default function InterestsScreen({ onDone, onBack }: Props) {
       </View>
       <View style={styles.footer}>
         <TouchableOpacity style={styles.button} onPress={() => onDone(selected)}>
-          <Text style={styles.buttonText}>Start Exploring →</Text>
+          <Text style={styles.buttonText}>Start Exploring</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>◀ Back</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -81,7 +81,7 @@ export default function InterestsScreen({ onDone, onBack }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#202C1F',
+    backgroundColor: '#0D2218',
     paddingHorizontal: 28,
     paddingTop: 100,
     paddingBottom: 48,
@@ -121,16 +121,16 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#5a9a5a',
+    borderColor: '#1E5038',
     backgroundColor: 'transparent',
   },
   chipActive: {
-    backgroundColor: '#2d5c2d',
-    borderColor: '#7dca7d',
+    backgroundColor: '#162E20',
+    borderColor: '#2A9D8F',
   },
   chipText: {
     fontFamily: 'Helvetica',
-    fontSize: 13,
+    fontSize: 14,
     color: 'rgba(255,255,240,0.55)',
     textAlign: 'center',
   },
@@ -145,10 +145,10 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: 'rgba(255,255,240,0.45)',
+    color: 'rgba(255,255,240,0.55)',
   },
   button: {
-    backgroundColor: '#374635',
+    backgroundColor: '#1A3828',
     paddingVertical: 16,
     borderRadius: 14,
     width: '100%',

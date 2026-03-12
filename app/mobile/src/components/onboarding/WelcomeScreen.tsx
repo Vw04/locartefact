@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import BrandLogo from '../BrandLogo';
 
 type Props = { onNext: () => void };
 
@@ -14,7 +15,7 @@ export default function WelcomeScreen({ onNext }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.top}>
-        <Text style={styles.title}>Geolore</Text>
+        <BrandLogo size="lg" />
         <Text style={styles.tagline}>Discover the story of where you are.</Text>
       </View>
       <View style={styles.features}>
@@ -26,7 +27,7 @@ export default function WelcomeScreen({ onNext }: Props) {
         ))}
       </View>
       <TouchableOpacity style={styles.button} onPress={onNext}>
-        <Text style={styles.buttonText}>Get Started →</Text>
+        <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
     </View>
   );
@@ -35,7 +36,7 @@ export default function WelcomeScreen({ onNext }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#202C1F',
+    backgroundColor: '#0D2218',
     paddingHorizontal: 28,
     paddingTop: 100,
     paddingBottom: 48,
@@ -55,13 +56,14 @@ const styles = StyleSheet.create({
   tagline: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: 'rgba(255,255,240,0.55)',
+    fontStyle: 'italic',
+    color: '#FFFFF0',
     textAlign: 'center',
   },
   features: {
     flex: 1,
     justifyContent: 'space-evenly',
-    marginTop: 32,
+    marginTop: 24,
     marginBottom: 16,
   },
   featureRow: {
@@ -80,7 +82,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   button: {
-    backgroundColor: '#374635',
+    backgroundColor: '#1A3828',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',

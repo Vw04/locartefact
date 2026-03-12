@@ -12,13 +12,18 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import FactCard from './src/components/FactCard';
-import LoadingScreen from './src/components/onboarding/LoadingScreen';
+import BrandLogo from './src/components/BrandLogo';
+import SettingsScreen from './src/components/SettingsScreen';
 import WelcomeScreen from './src/components/onboarding/WelcomeScreen';
 import ApiKeyScreen from './src/components/onboarding/ApiKeyScreen';
 import InterestsScreen from './src/components/onboarding/InterestsScreen';
 import type { Fact } from './src/types/place';
 import { getCurrentLocation } from './src/services/location';
-import { getOnboardingComplete, setOnboardingComplete, getUserInterests } from './src/services/keystore';
+import {
+  getOnboardingComplete, setOnboardingComplete, getUserInterests, setUserInterests,
+  getNotifSettings, setNotifSettings,
+} from './src/services/keystore';
+import type { NotifSettings } from './src/services/keystore';
 import { fetchNearbyFacts, reverseGeocodeLabel } from './src/services/wikipedia';
 import { rankFacts } from './src/services/ranking';
 import { synthesizeFacts } from './src/services/synthesis';
@@ -41,16 +46,20 @@ export default function App() {
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [factCount, setFactCount] = useState<number | null>(null);
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
-  const [onboardingStep, setOnboardingStep] = useState<'loading' | 'welcome' | 'apikey' | 'interests' | null>('loading');
+  const [onboardingStep, setOnboardingStep] = useState<'welcome' | 'apikey' | 'interests' | null>(null);
   const [interests, setInterests] = useState<string[]>(['All']);
+  const [showSettings, setShowSettings] = useState(false);
+  const [notifSettings, setNotifState] = useState<NotifSettings>({ enabled: false, frequencyMs: 300000, bulletCount: 2 });
 
   useEffect(() => {
     getOnboardingComplete().then((done) => {
       if (done) {
         getUserInterests().then(setInterests);
+        getNotifSettings().then(setNotifState);
         setOnboardingStep(null);
+      } else {
+        setOnboardingStep('welcome');
       }
-      // else stay at 'loading' — LoadingScreen will auto-advance
     });
   }, []);
 
@@ -118,12 +127,18 @@ export default function App() {
   const finishOnboarding = async (selectedInterests: string[]) => {
     setInterests(selectedInterests);
     await setOnboardingComplete();
+    await setUserInterests(selectedInterests);
     setOnboardingStep(null);
   };
 
-  if (onboardingStep === 'loading') {
-    return <LoadingScreen onDone={() => setOnboardingStep('welcome')} />;
-  }
+  const handleSaveSettings = async (newInterests: string[], newNotif: NotifSettings) => {
+    setInterests(newInterests);
+    setNotifState(newNotif);
+    await setUserInterests(newInterests);
+    await setNotifSettings(newNotif);
+    setShowSettings(false);
+  };
+
   if (onboardingStep === 'welcome') {
     return <WelcomeScreen onNext={() => setOnboardingStep('apikey')} />;
   }
@@ -163,8 +178,8 @@ export default function App() {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <View style={{ width: 32 }} />
-            <Text style={styles.appTitle}>Geolore</Text>
-            <TouchableOpacity onPress={() => setOnboardingStep('interests')} style={styles.settingsBtn}>
+            <BrandLogo size="sm" />
+            <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsBtn}>
               <View style={styles.menuLine} />
               <View style={styles.menuLine} />
               <View style={styles.menuLine} />
@@ -204,8 +219,8 @@ export default function App() {
                   step={100}
                   value={radius}
                   onValueChange={setRadius}
-                  minimumTrackTintColor="#88cc88"
-                  maximumTrackTintColor="#4a7a4a"
+                  minimumTrackTintColor="#2A9D8F"
+                  maximumTrackTintColor="#1E5038"
                   thumbTintColor="#FFFFF0"
                 />
                 <Text style={styles.sliderEndLabel}>10 km</Text>
@@ -224,6 +239,13 @@ export default function App() {
         />
       )}
 
+      <SettingsScreen
+        visible={showSettings}
+        interests={interests}
+        notifSettings={notifSettings}
+        onSave={handleSaveSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -231,12 +253,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#202C1F',
+    backgroundColor: '#0D2218',
   },
   devBar: {
     flexGrow: 0,
     flexShrink: 0,
-    backgroundColor: '#0a1a0a',
+    backgroundColor: '#050F0A',
   },
   devBarContent: {
     paddingHorizontal: 8,
@@ -270,13 +292,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  appTitle: {
-    fontFamily: 'Helvetica',
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: '#FFFFF0',
-  },
   settingsBtn: {
     width: 32,
     alignItems: 'flex-end',
@@ -290,7 +305,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,240,0.5)',
   },
   button: {
-    backgroundColor: '#374635',
+    backgroundColor: '#1A3828',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',

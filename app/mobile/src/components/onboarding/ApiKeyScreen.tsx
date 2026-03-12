@@ -41,7 +41,7 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>AI-Powered Facts</Text>
+        <Text style={styles.title}>Fact Synthesis</Text>
         <Text style={styles.subtitle}>Optional</Text>
         <Text style={styles.body}>
           Paste your Anthropic API key to generate punchy, curated facts.
@@ -69,7 +69,7 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
         </TouchableOpacity>
         <View style={styles.navRow}>
           <TouchableOpacity onPress={onBack}>
-            <Text style={styles.navText}>← Back</Text>
+            <Text style={styles.navText}>◀ Back</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onNext}>
             <Text style={styles.navText}>Skip for now</Text>
@@ -83,7 +83,7 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#202C1F',
+    backgroundColor: '#0D2218',
     paddingHorizontal: 28,
     paddingTop: 100,
     paddingBottom: 48,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: 'Helvetica',
     fontSize: 15,
-    color: 'rgba(255,255,240,0.45)',
+    color: 'rgba(255,255,240,0.55)',
     textAlign: 'center',
     marginTop: -8,
   },
@@ -117,14 +117,14 @@ const styles = StyleSheet.create({
   link: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: '#88cc88',
+    color: '#2A9D8F',
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#2a3d29',
+    backgroundColor: '#162E20',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#4a7a4a',
+    borderColor: '#1E5038',
     color: '#FFFFF0',
     fontFamily: 'Helvetica',
     fontSize: 15,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButton: {
-    backgroundColor: '#374635',
+    backgroundColor: '#1A3828',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
