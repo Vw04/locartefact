@@ -49,14 +49,13 @@ export default function InterestsScreen({ onDone, onBack }: Props) {
           <View key={ri} style={styles.row}>
             {row.map(({ label, icon }) => {
               const active = selected.includes(label);
-              const color = active ? '#FFFFF0' : 'rgba(255,255,240,0.55)';
               return (
                 <TouchableOpacity
                   key={label}
                   style={[styles.chip, active && styles.chipActive]}
                   onPress={() => toggle(label)}
                 >
-                  <Ionicons name={icon} size={28} color={color} />
+                  <Ionicons name={icon} size={36} color="#FFFFF0" />
                   <Text style={[styles.chipText, active && styles.chipTextActive]}>
                     {label}
                   </Text>
@@ -70,8 +69,9 @@ export default function InterestsScreen({ onDone, onBack }: Props) {
         <TouchableOpacity style={styles.button} onPress={() => onDone(selected)}>
           <Text style={styles.buttonText}>Start Exploring</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onBack}>
-          <Text style={styles.backText}>◀ Back</Text>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={16} color="rgba(255,255,240,0.55)" />
+          <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    minHeight: 90,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#1E5038',
@@ -130,8 +131,8 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontFamily: 'Helvetica',
-    fontSize: 14,
-    color: 'rgba(255,255,240,0.55)',
+    fontSize: 16,
+    color: '#FFFFF0',
     textAlign: 'center',
   },
   chipTextActive: {
@@ -141,6 +142,11 @@ const styles = StyleSheet.create({
   footer: {
     gap: 14,
     alignItems: 'center',
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   backText: {
     fontFamily: 'Helvetica',

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { getApiKey, setApiKey } from '../../services/keystore';
 
 type Props = { onNext: () => void; onBack: () => void };
@@ -62,14 +63,13 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
           secureTextEntry
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-      </View>
-      <View style={styles.actions}>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>Save & Continue</Text>
         </TouchableOpacity>
         <View style={styles.navRow}>
-          <TouchableOpacity onPress={onBack}>
-            <Text style={styles.navText}>◀ Back</Text>
+          <TouchableOpacity onPress={onBack} style={styles.navBtn}>
+            <Ionicons name="chevron-back" size={16} color="rgba(255,255,240,0.45)" />
+            <Text style={styles.navText}>Back</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onNext}>
             <Text style={styles.navText}>Skip for now</Text>
@@ -85,9 +85,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D2218',
     paddingHorizontal: 28,
-    paddingTop: 100,
     paddingBottom: 48,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   content: {
     gap: 16,
@@ -138,10 +137,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ff7777',
   },
-  actions: {
-    gap: 14,
-    alignItems: 'center',
-  },
   saveButton: {
     backgroundColor: '#1A3828',
     paddingVertical: 16,
@@ -159,6 +154,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+  },
+  navBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   navText: {
     fontFamily: 'Helvetica',

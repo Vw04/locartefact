@@ -1,20 +1,42 @@
 import React from 'react';
-import { Image } from 'react-native';
+import { Text, View } from 'react-native';
+import Svg, { Circle, Ellipse } from 'react-native-svg';
 
 type Size = 'sm' | 'md' | 'lg';
 
-const SIZE_MAP: Record<Size, { width: number; height: number }> = {
-  sm: { width: 130, height: 49 },
-  md: { width: 170, height: 64 },
-  lg: { width: 240, height: 90 },
+const SIZES: Record<Size, { r: number; fontSize: number; gap: number }> = {
+  sm: { r: 14, fontSize: 24, gap: 8 },
+  md: { r: 18, fontSize: 30, gap: 10 },
+  lg: { r: 24, fontSize: 40, gap: 12 },
 };
 
-// Primary dark logo (dark #0D2218 background blends with all app screens)
-const LOGO = require('../../../assets/Untitled design.png');
+function GlobeIcon({ r }: { r: number }) {
+  const cx = r + 2;
+  const cy = r + 2;
+  const size = (r + 2) * 2;
+  return (
+    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Outer circle */}
+      <Circle cx={cx} cy={cy} r={r} stroke="#FFFFF0" strokeWidth={1.5} fill="none" />
+      {/* Latitude lines */}
+      <Ellipse cx={cx} cy={cy - r * 0.3} rx={r * 0.95} ry={r * 0.25} stroke="#FFFFF0" strokeWidth={1} fill="none" />
+      <Ellipse cx={cx} cy={cy + r * 0.3} rx={r * 0.95} ry={r * 0.25} stroke="#FFFFF0" strokeWidth={1} fill="none" />
+      {/* Longitude arc */}
+      <Ellipse cx={cx} cy={cy} rx={r * 0.42} ry={r} stroke="#FFFFF0" strokeWidth={1} fill="none" />
+      {/* Teal accent at lower-left */}
+      <Ellipse cx={cx - r * 0.35} cy={cy + r * 0.45} rx={r * 0.28} ry={r * 0.18} fill="#2A9D8F" />
+    </Svg>
+  );
+}
 
-type Props = { size?: Size };
-
-export default function BrandLogo({ size = 'md' }: Props) {
-  const { width, height } = SIZE_MAP[size];
-  return <Image source={LOGO} style={{ width, height }} resizeMode="contain" />;
+export default function BrandLogo({ size = 'md' }: { size?: Size }) {
+  const { r, fontSize, gap } = SIZES[size];
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap }}>
+      <GlobeIcon r={r} />
+      <Text style={{ fontFamily: 'Helvetica', fontSize, fontWeight: '700', color: '#FFFFF0', letterSpacing: -0.5 }}>
+        Geolore
+      </Text>
+    </View>
+  );
 }
