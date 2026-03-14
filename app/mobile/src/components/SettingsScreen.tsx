@@ -235,8 +235,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   chipActive: {
-    backgroundColor: '#162E20',
-    borderColor: '#2A9D8F',
+    backgroundColor: '#374635',
+    borderColor: '#374635',
   },
   chipText: {
     fontFamily: 'Helvetica',
@@ -279,8 +279,8 @@ const styles = StyleSheet.create({
     borderColor: '#1E5038',
   },
   segActive: {
-    backgroundColor: '#162E20',
-    borderColor: '#2A9D8F',
+    backgroundColor: '#374635',
+    borderColor: '#374635',
   },
   segText: {
     fontFamily: 'Helvetica',

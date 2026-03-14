@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 import FactCard from './src/components/FactCard';
 import BrandLogo from './src/components/BrandLogo';
 import SettingsScreen from './src/components/SettingsScreen';
@@ -42,9 +43,10 @@ const DEV_CITY_COLORS: Record<string, { bg: string; border: string; text: string
 
 export default function App() {
   const [facts, setFacts] = useState<Fact[]>([]);
-  const [status, setStatus] = useState<string>('Tap refresh to discover nearby facts.');
+  const [status, setStatus] = useState<string>('Discovering nearby facts…');
   const [loading, setLoading] = useState<boolean>(false);
   const [radius, setRadius] = useState<number>(1000);
+  const [synthRadius, setSynthRadius] = useState<number>(1000);
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [factCount, setFactCount] = useState<number | null>(null);
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
@@ -54,17 +56,36 @@ export default function App() {
   const [notifSettings, setNotifState] = useState<NotifSettings>({ enabled: false, frequencyMs: 300000, bulletCount: 2 });
   const [displaySettings, setDisplaySettings] = useState<DisplaySettings>({ sortOrder: 'distance', maxFacts: 5 });
 
+  // Keep a stable ref to runWithCoords for use inside the startup effect
+  const runWithCoordsRef = useRef<((lat: number, lon: number, label: string, interestsOverride?: string[]) => Promise<void>) | null>(null);
+
   useEffect(() => {
-    getOnboardingComplete().then((done) => {
+    (async () => {
+      const done = await getOnboardingComplete();
       if (done) {
-        getUserInterests().then(setInterests);
-        getNotifSettings().then(setNotifState);
-        getDisplaySettings().then(setDisplaySettings);
+        const [savedInterests, savedNotif, savedDisplay] = await Promise.all([
+          getUserInterests(),
+          getNotifSettings(),
+          getDisplaySettings(),
+        ]);
+        setInterests(savedInterests);
+        setNotifState(savedNotif);
+        setDisplaySettings(savedDisplay);
         setOnboardingStep(null);
+        // Auto-refresh with correct interests before state settles
+        try {
+          setLoading(true);
+          setStatus('Discovering nearby facts…');
+          const { latitude, longitude } = await getCurrentLocation();
+          await runWithCoordsRef.current?.(latitude, longitude, 'Your Location', savedInterests);
+        } catch {
+          setStatus('Location Not Found');
+          setLoading(false);
+        }
       } else {
         setOnboardingStep('welcome');
       }
-    });
+    })();
 
     // Handle notification taps — bring app to foreground on main screen
     const sub = Notifications.addNotificationResponseReceivedListener(() => {
@@ -81,6 +102,37 @@ export default function App() {
     }
   }, [radius, facts]);
 
+  // JIT synthesis: synthesize newly-exposed facts when synthRadius/sort/maxFacts changes
+  useEffect(() => {
+    if (facts.length === 0 || loading) return;
+    const currentDisplayed = facts
+      .filter((f) => f.distance === 0 || f.distance <= synthRadius)
+      .sort((a, b) =>
+        displaySettings.sortOrder === 'notable'
+          ? b.extract.length - a.extract.length
+          : a.distance - b.distance
+      )
+      .slice(0, displaySettings.maxFacts);
+    const needsSynthesis = currentDisplayed.filter((f) => !f.synthesizedFacts);
+    if (needsSynthesis.length === 0) return;
+    const needsIds = new Set(needsSynthesis.map((f) => f.pageId));
+    synthesizeFacts(needsSynthesis, interests).then((synthesized) => {
+      const synthesizedIds = new Set(synthesized.map((f) => f.pageId));
+      const map = new Map(synthesized.map((f) => [f.pageId, f]));
+      const hasInterestFilter = !interests.includes('All');
+      setFacts((prev) =>
+        prev
+          .map((f) => {
+            if (map.has(f.pageId)) return map.get(f.pageId)!;
+            if (hasInterestFilter && needsIds.has(f.pageId) && !synthesizedIds.has(f.pageId)) return null;
+            return f;
+          })
+          .filter((f): f is Fact => f !== null)
+          .sort((a, b) => a.distance - b.distance)
+      );
+    });
+  }, [synthRadius, displaySettings.sortOrder, displaySettings.maxFacts]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const hasLoaded = facts.length > 0 || loading;
 
   const displayedFacts = facts
@@ -96,26 +148,39 @@ export default function App() {
     ? `${(radius / 1000).toFixed(1)} km`
     : `${radius} m`;
 
-  const runWithCoords = async (lat: number, lon: number, label: string) => {
+  const runWithCoords = async (lat: number, lon: number, label: string, interestsOverride = interests) => {
     setLoading(true);
     setCurrentCoords(null);
     setFactCount(null);
     setLocationLabel(null);
-    setStatus(`Loading: ${label}`);
+    setStatus('Discovering nearby facts…');
     try {
       const [rawFacts, geoLabel] = await Promise.all([
         fetchNearbyFacts(lat, lon),
         reverseGeocodeLabel(lat, lon),
       ]);
-      const RANK_POOL = 20;
+      const RANK_POOL = interestsOverride.includes('All') ? 20 : 28;
       const ranked = rankFacts(rawFacts, RANK_POOL);
       setFacts([...ranked].sort((a, b) => a.distance - b.distance));
+
+      const initialVisible = ranked
+        .filter((f) => f.distance === 0 || f.distance <= radius)
+        .sort((a, b) =>
+          displaySettings.sortOrder === 'notable'
+            ? b.extract.length - a.extract.length
+            : a.distance - b.distance
+        )
+        .slice(0, displaySettings.maxFacts);
+
+      const synthesized = await synthesizeFacts(initialVisible, interestsOverride);
+      const synthesizedMap = new Map(synthesized.map((f) => [f.pageId, f]));
+      const hasInterestFilter = !interestsOverride.includes('All');
+      const merged = ranked
+        .map((f) => synthesizedMap.get(f.pageId) ?? (hasInterestFilter ? null : f))
+        .filter((f): f is Fact => f !== null);
+      setFacts([...merged].sort((a, b) => a.distance - b.distance));
       setCurrentCoords({ lat, lon });
       setLocationLabel(geoLabel || label);
-      const synthesized = await synthesizeFacts(ranked, interests);
-      const synthesizedMap = new Map(synthesized.map((f) => [f.pageId, f]));
-      const merged = ranked.map((f) => synthesizedMap.get(f.pageId) ?? f);
-      setFacts([...merged].sort((a, b) => a.distance - b.distance));
     } catch {
       setStatus('Location Not Found');
       setFacts([]);
@@ -123,6 +188,9 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  // Keep ref in sync so startup effect can call it
+  runWithCoordsRef.current = runWithCoords;
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -132,7 +200,7 @@ export default function App() {
     setStatus('Requesting location…');
     try {
       const { latitude, longitude } = await getCurrentLocation();
-      await runWithCoords(latitude, longitude, `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+      await runWithCoords(latitude, longitude, 'Your Location');
     } catch {
       setStatus('Location Not Found');
       setFacts([]);
@@ -185,6 +253,13 @@ export default function App() {
           >
             <Text style={[styles.devLabel, { color: '#ffbb66' }]}>↩ Onboarding</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.devButton, { backgroundColor: '#0a1a12', borderColor: '#2A9D8F' }]}
+            onPress={handleRefresh}
+            disabled={loading}
+          >
+            <Text style={[styles.devLabel, { color: '#2A9D8F' }]}>📍 Location</Text>
+          </TouchableOpacity>
           {SAMPLE_LOCATIONS.locations.map((loc) => {
             const c = DEV_CITY_COLORS[loc.label];
             return (
@@ -218,31 +293,23 @@ export default function App() {
             <BrandLogo size="xl" />
           </View>
         )}
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleRefresh}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Refresh Nearby Facts</Text>
-          )}
-        </TouchableOpacity>
+        {loading && !hasLoaded && (
+          <ActivityIndicator color="#FFFFF0" style={{ marginBottom: 12 }} />
+        )}
         {currentCoords && factCount !== null ? (
           <TouchableOpacity
+            style={styles.infoBar}
             onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${currentCoords.lat},${currentCoords.lon}`)}
           >
-            <Text style={styles.statusCoords}>
-              {locationLabel ? `${locationLabel} — ` : ''}{currentCoords.lat.toFixed(5)}, {currentCoords.lon.toFixed(5)} — {factCount} facts found
-            </Text>
+            <Ionicons name="navigate-outline" size={12} color="rgba(255,255,225,0.4)" style={{ marginRight: 5 }} />
+            <Text style={[styles.infoBarText, { flex: 1 }]}>{locationLabel || 'Current Location'}</Text>
+            <Text style={styles.infoBarStats}>{displayedFacts.length} {displayedFacts.length === 1 ? 'fact' : 'facts'} · {radiusLabel}</Text>
           </TouchableOpacity>
         ) : (
-          <Text style={styles.status}>{status}</Text>
+          !loading && <Text style={styles.status}>{status}</Text>
         )}
         {hasLoaded && (
           <View style={styles.sliderContainer}>
-            <Text style={styles.sliderLabel}>Radius: {radiusLabel}</Text>
             <View style={styles.sliderRow}>
               <Text style={styles.sliderEndLabel}>0 m</Text>
               <Slider
@@ -252,6 +319,7 @@ export default function App() {
                 step={100}
                 value={radius}
                 onValueChange={setRadius}
+                onSlidingComplete={setSynthRadius}
                 minimumTrackTintColor="#2A9D8F"
                 maximumTrackTintColor="#1E5038"
                 thumbTintColor="#FFFFF0"
@@ -261,6 +329,12 @@ export default function App() {
           </View>
         )}
       </View>
+
+      {hasLoaded && !loading && displayedFacts.length === 0 && (
+        <Text style={[styles.status, { paddingHorizontal: 20, marginTop: 16 }]}>
+          No {interests.includes('All') ? '' : `${interests[0]} `}facts found nearby. Try a wider radius or update your interests in Settings.
+        </Text>
+      )}
 
       {hasLoaded && (
         <FlatList
@@ -353,43 +427,38 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     backgroundColor: '#FFFFF0',
   },
-  button: {
-    backgroundColor: '#1A3828',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    fontFamily: 'Helvetica',
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   status: {
     fontFamily: 'Helvetica',
-    fontSize: 14,
-    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 225, 0.85)',
     textAlign: 'center',
   },
-  statusCoords: {
+  infoBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+    backgroundColor: '#1A3828',
+    marginBottom: 8,
+  },
+  infoBarText: {
+    fontFamily: 'Helvetica',
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 225, 0.85)',
+    letterSpacing: 0.1,
+  },
+  infoBarStats: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
+    fontWeight: '500',
+    color: 'rgba(255, 255, 225, 0.72)',
+    letterSpacing: 0.1,
   },
   sliderContainer: {
-    marginTop: 12,
-  },
-  sliderLabel: {
-    fontFamily: 'Helvetica',
-    fontSize: 13,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 4,
+    marginTop: 4,
   },
   sliderRow: {
     flexDirection: 'row',

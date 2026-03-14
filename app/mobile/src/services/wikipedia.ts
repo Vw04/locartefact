@@ -20,6 +20,24 @@ type PageData = {
 
 const RADIUS_STEPS = [3000, 8000, 20000];
 
+function cleanExtract(text: string): string {
+  return text
+    // Remove parenthetical groups containing non-Basic-Latin characters
+    // (catches: "東京, Tōkyō, /ˈtoʊkioʊ/", "Russian: Москва", IPA blocks, etc.)
+    .replace(/\s*\([^)]*[^\u0000-\u024F][^)]*\)/g, '')
+    // Remove remaining CJK / Cyrillic / non-Latin-extended runs of 2+ chars
+    .replace(/[\u0250-\uFFFF]{2,}/g, '')
+    // Remove standalone IPA between slashes: /ˈtoʊkioʊ/
+    .replace(/\s*\/[^\s/]{2,}\/(?=\s|,|\.|$)/g, '')
+    // Remove square-bracket annotations: [note 1], [1]
+    .replace(/\s*\[[^\]]{1,30}\]/g, '')
+    // Clean up orphaned punctuation and whitespace
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s*,(\s*,)+/g, ',')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 const factCache = new Map<string, { facts: Fact[]; ts: number }>();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -164,7 +182,7 @@ export async function fetchNearbyFacts(lat: number, lon: number): Promise<Fact[]
       id: idx,
       pageId: entry.pageid,
       title: page?.title ?? entry.title,
-      extract: page?.extract ?? '',
+      extract: cleanExtract(page?.extract ?? ''),
       distance: entry.dist,
       lat: wikiCoords?.lat ?? entry.lat,
       lon: wikiCoords?.lon ?? entry.lon,

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Fact } from '../types/place';
 import { getApiKey } from './keystore';
 
@@ -11,7 +12,8 @@ Each fact must be a punchy talking point someone can say out loud to friends whi
 - Prefer the lesser-known story over the obvious summary
 - Do NOT restate the place name — the card already shows it
 - Do NOT open with "It is...", "Located in...", or generic description
-- Correct capitalization and punctuation, no filler`;
+- Correct capitalization and punctuation, no filler
+- Never reference the source article, excerpt, or your own knowledge limits — do not say "the article doesn't mention", "based on the excerpt", or "I don't have information about". Write confidently with what's available.`;
 
 const CATEGORY_LORE: Record<string, string> = {
   'History':            'For History: battles fought here, who won and lost, casualties, treaties signed, kingdoms that rose or fell.',
@@ -23,10 +25,39 @@ const CATEGORY_LORE: Record<string, string> = {
   'Trivia & Quirky':    'For Trivia & Quirky: bizarre coincidences, unexpected records, local legends, surprising historical connections.',
 };
 
-const synthesisCache = new Map<string, { facts: Fact[]; ts: number }>();
-const SYNTHESIS_CACHE_TTL_MS = 30 * 60 * 1000;
+// Per-fact cache: key = `${pageId}|${interestKey}`
+// synthesizedFacts = null means Claude confirmed this fact doesn't match the interest filter
+const STORAGE_KEY = '@geolore_synthesis_v3';
+const SYNTHESIS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const factCache = new Map<string, { synthesizedFacts: string[] | null; ts: number }>();
+let cacheLoaded = false;
+
+async function loadCacheFromStorage(): Promise<void> {
+  if (cacheLoaded) return;
+  cacheLoaded = true;
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const entries: [string, { synthesizedFacts: string[] | null; ts: number }][] = JSON.parse(raw);
+    const now = Date.now();
+    for (const [k, v] of entries) {
+      if (now - v.ts < SYNTHESIS_CACHE_TTL_MS) {
+        factCache.set(k, v);
+      }
+    }
+    console.log(`[synthesis] loaded ${factCache.size} cached fact(s) from storage`);
+  } catch {}
+}
+
+async function persistCacheToStorage(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...factCache.entries()]));
+  } catch {}
+}
 
 export async function synthesizeFacts(facts: Fact[], interests: string[] = ['All']): Promise<Fact[]> {
+  await loadCacheFromStorage();
   const API_KEY =
     (await getApiKey()) ?? process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
   if (!API_KEY) {
@@ -35,22 +66,41 @@ export async function synthesizeFacts(facts: Fact[], interests: string[] = ['All
   }
   if (facts.length === 0) return facts;
 
-  const cacheKey = [...facts.map((f) => f.pageId)].sort().join(',') +
-    '|' + [...interests].sort().join(',');
-  const hit = synthesisCache.get(cacheKey);
-  if (hit && Date.now() - hit.ts < SYNTHESIS_CACHE_TTL_MS) {
-    console.log('[synthesis] cache hit');
-    return hit.facts;
+  const interestKey = [...interests].sort().join(',');
+  const result: Fact[] = [];
+  const uncached: Fact[] = [];
+
+  // Split into per-fact cache hits and misses
+  for (const f of facts) {
+    const hit = factCache.get(`${f.pageId}|${interestKey}`);
+    if (hit && Date.now() - hit.ts < SYNTHESIS_CACHE_TTL_MS) {
+      if (hit.synthesizedFacts !== null) {
+        result.push({ ...f, synthesizedFacts: hit.synthesizedFacts });
+        console.log(`[synthesis] "${f.title}" → cache hit`);
+      } else {
+        console.log(`[synthesis] "${f.title}" → cached as filtered`);
+        // omit — confirmed not matching this interest
+      }
+    } else {
+      uncached.push(f);
+    }
   }
 
-  const interestClause =
-    interests.length > 0 && !interests.includes('All')
-      ? `\nFocus only on facts related to: ${interests.join(', ')}. If an article has no matching facts, return [] for that entry.\n` +
-        interests.filter((i) => CATEGORY_LORE[i]).map((i) => CATEGORY_LORE[i]).join(' ')
-      : '';
+  if (uncached.length === 0) {
+    console.log('[synthesis] all facts served from per-fact cache');
+    return result;
+  }
+
+  console.log(`[synthesis] calling API for ${uncached.length} uncached fact(s)`);
+
+  const hasInterestFilter = interests.length > 0 && !interests.includes('All');
+  const interestClause = hasInterestFilter
+    ? `\nFocus only on facts related to: ${interests.join(', ')}. If an article has no matching facts, return [] for that entry.\n` +
+      interests.filter((i) => CATEGORY_LORE[i]).map((i) => CATEGORY_LORE[i]).join(' ')
+    : '';
   const systemPrompt = SYSTEM_PROMPT + interestClause;
 
-  const userContent = facts
+  const userContent = uncached
     .map((f, i) => `Article ${i + 1} title: ${f.title}\nArticle ${i + 1} excerpt:\n${f.extract.slice(0, 300)}`)
     .join('\n\n---\n\n');
 
@@ -75,48 +125,52 @@ export async function synthesizeFacts(facts: Fact[], interests: string[] = ['All
     });
 
     if (!res.ok) {
-      console.log(`[synthesis] API error ${res.status} — using extracts`);
-      return facts;
+      console.log(`[synthesis] API error ${res.status} — using extracts for uncached facts`);
+      return [...result, ...uncached];
     }
 
     const data = await res.json();
     const text: string = data.content?.[0]?.text ?? '';
     console.log('[synthesis] raw response:', text.slice(0, 200));
 
-    // Claude sometimes wraps JSON in prose — extract the outermost array
     const match = text.match(/\[[\s\S]*\]/);
     if (!match) {
-      console.log('[synthesis] No JSON array found in response — using extracts');
-      return facts;
+      console.log('[synthesis] No JSON array found — using extracts for uncached facts');
+      return [...result, ...uncached];
     }
     const parsed: unknown = JSON.parse(match[0]);
-
     if (!Array.isArray(parsed)) {
-      console.log('[synthesis] Unexpected response shape — using extracts');
-      return facts;
+      console.log('[synthesis] Unexpected response shape — using extracts for uncached facts');
+      return [...result, ...uncached];
     }
 
-    const hasInterestFilter = interests.length > 0 && !interests.includes('All');
-    const synthesized = facts.flatMap((fact, i) => {
+    uncached.forEach((fact, i) => {
       const entry = parsed[i];
-      if (Array.isArray(entry) && entry.length === 0 && hasInterestFilter) {
+      const key = `${fact.pageId}|${interestKey}`;
+      if (Array.isArray(entry) && entry.length > 0) {
+        const synthesizedFacts = (entry as unknown[])
+          .filter((s): s is string => typeof s === 'string')
+          .slice(0, 5);
+        console.log(`[synthesis] "${fact.title}" → ${synthesizedFacts.length} facts`);
+        result.push({ ...fact, synthesizedFacts });
+        factCache.set(key, { synthesizedFacts, ts: Date.now() });
+      } else if (hasInterestFilter && Array.isArray(entry) && entry.length === 0) {
         console.log(`[synthesis] "${fact.title}" → filtered (no matching interests)`);
-        return [];
+        factCache.set(key, { synthesizedFacts: null, ts: Date.now() });
+        // omit from result — confirmed not matching
+      } else {
+        // No synthesis produced (e.g. malformed entry) — include original, don't cache
+        result.push(fact);
       }
-      if (!Array.isArray(entry) || entry.length === 0) return [fact];
-      const synthesizedFacts = (entry as unknown[])
-        .filter((s): s is string => typeof s === 'string')
-        .slice(0, 5);
-      console.log(`[synthesis] "${fact.title}" → ${synthesizedFacts.length} facts`);
-      return [{ ...fact, synthesizedFacts }];
     });
-    synthesisCache.set(cacheKey, { facts: synthesized, ts: Date.now() });
-    return synthesized;
+
+    void persistCacheToStorage();
+    return result;
   } catch (err) {
     const isAbort = err instanceof Error && err.name === 'AbortError';
     const msg = err instanceof Error ? err.message : String(err);
-    console.log(`[synthesis] ${isAbort ? 'timeout' : 'error'}: ${msg} — using extracts`);
-    return facts;
+    console.log(`[synthesis] ${isAbort ? 'timeout' : 'error'}: ${msg} — using extracts for uncached facts`);
+    return [...result, ...uncached];
   } finally {
     clearTimeout(timeout);
   }

@@ -1,44 +1,38 @@
 import React, { useState } from 'react';
 import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { Fact } from '../types/place';
 
 type Props = { fact: Fact };
 
+const IMAGE_H = 80;
+
 export default function FactCard({ fact }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [headerH, setHeaderH] = useState(IMAGE_H);
 
   const openMaps = () =>
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${fact.lat},${fact.lon}`);
 
   const openWikipedia = () => Linking.openURL(fact.sourceUrl);
 
-  const bodyContent = (
-    <>
-      <Text style={styles.title}>{fact.title}</Text>
-      {fact.hasGeoData && fact.distance > 0 && (
-        <Text style={styles.distance}>
-          {fact.distance >= 1000
-            ? `${(fact.distance / 1000).toFixed(1)} km away`
-            : `${Math.round(fact.distance)} m away`}
-        </Text>
-      )}
-      {fact.synthesizedFacts ? (
-        <View style={styles.factsContainer}>
-          {fact.synthesizedFacts.map((f, i) => (
-            <Text key={i} style={styles.factBullet}>{'• '}{f}</Text>
-          ))}
+  const distanceLabel =
+    fact.hasGeoData && fact.distance > 0
+      ? fact.distance >= 1000
+        ? `${(fact.distance / 1000).toFixed(1)} km away`
+        : `${Math.round(fact.distance)} m away`
+      : null;
+
+  const factsContent = fact.synthesizedFacts ? (
+    <View style={styles.factsContainer}>
+      {fact.synthesizedFacts.map((f, i, arr) => (
+        <View key={i} style={[styles.factItem, i === arr.length - 1 && styles.factItemLast]}>
+          <Text style={styles.factText}>{f}</Text>
         </View>
-      ) : (
-        <Text style={styles.extract}>{fact.extract}</Text>
-      )}
-      {expanded && fact.synthesizedFacts && (
-        <View style={styles.expandedSection}>
-          <Text style={styles.expandedLabel}>Full article summary</Text>
-          <Text style={styles.extract}>{fact.extract}</Text>
-        </View>
-      )}
-      <Text style={styles.expandHint}>{expanded ? '▲ Less' : '▼ More'}</Text>
-    </>
+      ))}
+    </View>
+  ) : (
+    <Text style={styles.extract}>{fact.extract}</Text>
   );
 
   const cardBody = (
@@ -47,12 +41,39 @@ export default function FactCard({ fact }: Props) {
       onPress={() => setExpanded((v) => !v)}
     >
       {fact.thumbnail ? (
-        <View style={styles.row}>
+        <View style={styles.thumbnailWrap}>
           <Image source={{ uri: fact.thumbnail }} style={styles.thumbnail} />
-          <View style={styles.textContainer}>{bodyContent}</View>
+
+          {/* Header always beside image */}
+          <View
+            style={styles.thumbnailHeader}
+            onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}
+          >
+            <Text style={styles.title}>{fact.title}</Text>
+            {distanceLabel && <Text style={styles.distance}>{distanceLabel}</Text>}
+          </View>
+
+          {/* Facts: beside image if header didn't fill it, full-width otherwise */}
+          <View style={headerH < IMAGE_H ? styles.thumbnailInset : undefined}>
+            {factsContent}
+          </View>
         </View>
       ) : (
-        bodyContent
+        <>
+          <Text style={styles.title}>{fact.title}</Text>
+          {distanceLabel && <Text style={styles.distance}>{distanceLabel}</Text>}
+          {factsContent}
+        </>
+      )}
+      {expanded && (
+        <View style={styles.expandedSection}>
+          <Text style={styles.expandedLabel}>Full article summary</Text>
+          <Text style={styles.extract}>{fact.extract}</Text>
+          <TouchableOpacity onPress={openWikipedia} style={styles.articleLink}>
+            <Ionicons name="open-outline" size={13} color="rgba(255,251,188,0.6)" />
+            <Text style={styles.articleLinkText}>Read full article</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -60,14 +81,15 @@ export default function FactCard({ fact }: Props) {
   return (
     <View style={styles.card}>
       {cardBody}
-      <View style={[styles.buttonRow, !fact.hasGeoData && styles.buttonRowCentered]}>
+      <View style={[styles.buttonRow, !fact.hasGeoData && styles.buttonRowNoMap]}>
         {fact.hasGeoData && (
-          <TouchableOpacity onPress={openMaps}>
-            <Text style={styles.linkText}>Map View</Text>
+          <TouchableOpacity onPress={openMaps} style={styles.footerBtn}>
+            <Ionicons name="map-outline" size={15} color="rgba(255,251,188,0.6)" />
+            <Text style={styles.linkText}>Map</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={openWikipedia}>
-          <Text style={styles.linkText}>Learn More</Text>
+        <TouchableOpacity onPress={() => setExpanded((v) => !v)} style={styles.footerBtn}>
+          <Text style={styles.expandHint}>{expanded ? '▲' : '▼'}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -83,7 +105,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Helvetica',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     marginBottom: 4,
     color: '#FFFFF0',
@@ -91,8 +113,8 @@ const styles = StyleSheet.create({
   distance: {
     fontFamily: 'Helvetica',
     fontSize: 13,
-    color: '#FFFFFF',
-    marginBottom: 8,
+    color: '#FFFFF0',
+    marginBottom: 6,
   },
   extract: {
     fontFamily: 'Helvetica',
@@ -100,11 +122,33 @@ const styles = StyleSheet.create({
     color: '#FFFFF0',
     lineHeight: 22,
   },
-  factsContainer: {
-    marginTop: 4,
-    gap: 6,
+  thumbnailWrap: {
+    position: 'relative',
   },
-  factBullet: {
+  thumbnailHeader: {
+    paddingRight: 100,
+  },
+  thumbnailInset: {
+    paddingRight: 100,
+  },
+  thumbnail: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  factsContainer: {
+    marginTop: 2,
+  },
+  factItem: {
+    marginBottom: 8,
+  },
+  factItemLast: {
+    marginBottom: 0,
+  },
+  factText: {
     fontFamily: 'Helvetica',
     fontSize: 15,
     color: '#FFFFF0',
@@ -124,40 +168,47 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 6,
   },
+  articleLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 10,
+  },
+  articleLinkText: {
+    fontFamily: 'Helvetica',
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,251,188,0.6)',
+    letterSpacing: 0.3,
+  },
   expandHint: {
     fontFamily: 'Helvetica',
-    fontSize: 11,
-    color: 'rgba(255,255,240,0.4)',
-    marginTop: 8,
-    textAlign: 'right',
-  },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  thumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-  },
-  textContainer: {
-    flex: 1,
-    marginLeft: 10,
+    fontSize: 12,
+    color: 'rgba(255,255,240,0.35)',
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    paddingHorizontal: 4,
     borderTopWidth: 1,
-    borderTopColor: '#FFFFFF',
-    paddingTop: 10,
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
-  buttonRowCentered: {
-    justifyContent: 'center',
+  buttonRowNoMap: {
+    justifyContent: 'flex-end',
+  },
+  footerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   linkText: {
     fontFamily: 'Helvetica',
-    fontSize: 14,
-    color: '#F8FABC',
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,251,188,0.6)',
+    letterSpacing: 0.3,
   },
 });
