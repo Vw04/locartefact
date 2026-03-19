@@ -13,7 +13,8 @@ Each fact must be a punchy talking point someone can say out loud to friends whi
 - Do NOT restate the place name — the card already shows it
 - Do NOT open with "It is...", "Located in...", or generic description
 - Correct capitalization and punctuation, no filler
-- Never reference the source article, excerpt, or your own knowledge limits — do not say "the article doesn't mention", "based on the excerpt", or "I don't have information about". Write confidently with what's available.`;
+- Never reference the source article, excerpt, or your own knowledge limits — do not say "the article doesn't mention", "based on the excerpt", or "I don't have information about". Write confidently with what's available.
+- Do not use em-dashes (—); use commas, colons, or periods instead.`;
 
 const CATEGORY_LORE: Record<string, string> = {
   'History':            'For History: battles fought here, who won and lost, casualties, treaties signed, kingdoms that rose or fell.',

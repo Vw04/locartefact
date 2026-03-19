@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FactCard from './src/components/FactCard';
 import BrandLogo from './src/components/BrandLogo';
 import SettingsScreen from './src/components/SettingsScreen';
+import HomeScreen from './src/components/HomeScreen';
 import WelcomeScreen from './src/components/onboarding/WelcomeScreen';
 import ApiKeyScreen from './src/components/onboarding/ApiKeyScreen';
 import InterestsScreen from './src/components/onboarding/InterestsScreen';
@@ -55,6 +56,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [notifSettings, setNotifState] = useState<NotifSettings>({ enabled: false, frequencyMs: 300000, bulletCount: 2 });
   const [displaySettings, setDisplaySettings] = useState<DisplaySettings>({ sortOrder: 'distance', maxFacts: 5 });
+  const [showHome, setShowHome] = useState(false);
 
   // Keep a stable ref to runWithCoords for use inside the startup effect
   const runWithCoordsRef = useRef<((lat: number, lon: number, label: string, interestsOverride?: string[]) => Promise<void>) | null>(null);
@@ -72,6 +74,7 @@ export default function App() {
         setNotifState(savedNotif);
         setDisplaySettings(savedDisplay);
         setOnboardingStep(null);
+        setShowHome(true);
         // Auto-refresh with correct interests before state settles
         try {
           setLoading(true);
@@ -213,6 +216,16 @@ export default function App() {
     await setOnboardingComplete();
     await setUserInterests(selectedInterests);
     setOnboardingStep(null);
+    setShowHome(true);
+    try {
+      setLoading(true);
+      setStatus('Discovering nearby facts…');
+      const { latitude, longitude } = await getCurrentLocation();
+      await runWithCoords(latitude, longitude, 'Your Location', selectedInterests);
+    } catch {
+      setStatus('Location Not Found');
+      setLoading(false);
+    }
   };
 
   const handleSaveSettings = async (newInterests: string[], newNotif: NotifSettings, newDisplay: DisplaySettings) => {
@@ -224,6 +237,15 @@ export default function App() {
     await saveDisplaySettings(newDisplay);
     setShowSettings(false);
   };
+
+  if (showHome) {
+    return (
+      <HomeScreen
+        loading={loading}
+        onCardView={() => setShowHome(false)}
+      />
+    );
+  }
 
   if (onboardingStep === 'checking') {
     return <View style={{ flex: 1, backgroundColor: '#0D2218' }} />;

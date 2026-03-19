@@ -63,6 +63,8 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
           secureTextEntry
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
+      </View>
+      <View style={styles.footer}>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>Save & Continue</Text>
         </TouchableOpacity>
@@ -85,12 +87,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D2218',
     paddingHorizontal: 28,
+    paddingTop: 60,
     paddingBottom: 48,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   content: {
+    flex: 1,
+    justifyContent: 'center',
     gap: 16,
-    alignItems: 'center',
   },
   title: {
     fontFamily: 'Helvetica',
@@ -136,6 +140,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 12,
     color: '#ff7777',
+  },
+  footer: {
+    gap: 14,
+    alignItems: 'center',
   },
   saveButton: {
     backgroundColor: '#1A3828',
