@@ -94,9 +94,10 @@ export default function FactCard({ fact }: Props) {
                     ]}
                     onLayout={e => {
                       if (splitIdx !== null) return;
+                      const h = e.nativeEvent.layout.height;
                       setFactItemHeights(prev => {
                         const next = [...prev];
-                        next[i] = e.nativeEvent.layout.height;
+                        next[i] = h;
                         return next;
                       });
                     }}
