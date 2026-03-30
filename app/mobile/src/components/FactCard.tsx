@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Fact } from '../types/place';
@@ -10,6 +10,32 @@ const IMAGE_H = 80;
 export default function FactCard({ fact }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [headerH, setHeaderH] = useState(IMAGE_H);
+  const [factItemHeights, setFactItemHeights] = useState<number[]>([]);
+  const [splitIdx, setSplitIdx] = useState<number | null>(null);
+
+  const factCount = fact.synthesizedFacts?.length ?? 0;
+
+  // Reset measurements when this card's content changes
+  useEffect(() => {
+    setFactItemHeights([]);
+    setSplitIdx(null);
+  }, [fact.pageId, factCount]);
+
+  // Compute splitIdx once all item heights are measured
+  useEffect(() => {
+    if (splitIdx !== null) return;
+    if (!fact.synthesizedFacts || factItemHeights.length < fact.synthesizedFacts.length) return;
+    const remaining = Math.max(0, IMAGE_H - headerH);
+    let cumH = 0;
+    for (let i = 0; i < fact.synthesizedFacts.length; i++) {
+      cumH += factItemHeights[i] ?? 0;
+      if (cumH > remaining) {
+        setSplitIdx(i);
+        return;
+      }
+    }
+    setSplitIdx(fact.synthesizedFacts.length);
+  }, [factItemHeights, headerH, splitIdx, fact.synthesizedFacts]);
 
   const openMaps = () =>
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${fact.lat},${fact.lon}`);
@@ -53,10 +79,38 @@ export default function FactCard({ fact }: Props) {
             {distanceLabel && <Text style={styles.distance}>{distanceLabel}</Text>}
           </View>
 
-          {/* Facts: beside image if header didn't fill it, full-width otherwise */}
-          <View style={headerH < IMAGE_H ? styles.thumbnailInset : undefined}>
-            {factsContent}
-          </View>
+          {/* Facts: items beside image until they exceed image bottom, then full-width */}
+          {(() => {
+            const effectiveSplitIdx = splitIdx ?? factCount;
+            return fact.synthesizedFacts ? (
+              <View style={styles.factsContainer}>
+                {fact.synthesizedFacts.map((f, i, arr) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.factItem,
+                      i < effectiveSplitIdx && styles.thumbnailInset,
+                      i === arr.length - 1 && styles.factItemLast,
+                    ]}
+                    onLayout={e => {
+                      if (splitIdx !== null) return;
+                      setFactItemHeights(prev => {
+                        const next = [...prev];
+                        next[i] = e.nativeEvent.layout.height;
+                        return next;
+                      });
+                    }}
+                  >
+                    <Text style={styles.factText}>{f}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.thumbnailInset}>
+                <Text style={styles.extract}>{fact.extract}</Text>
+              </View>
+            );
+          })()}
         </View>
       ) : (
         <>
