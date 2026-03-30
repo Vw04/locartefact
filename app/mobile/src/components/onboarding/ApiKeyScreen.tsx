@@ -55,7 +55,7 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
         <TextInput
           style={styles.input}
           placeholder="sk-ant-..."
-          placeholderTextColor="rgba(255,255,240,0.3)"
+          placeholderTextColor="rgba(236,238,242,0.3)"
           value={input}
           onChangeText={(t) => { setInput(t); setError(''); }}
           autoCapitalize="none"
@@ -70,7 +70,7 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
         </TouchableOpacity>
         <View style={styles.navRow}>
           <TouchableOpacity onPress={onBack} style={styles.navBtn}>
-            <Ionicons name="chevron-back" size={16} color="rgba(255,255,240,0.45)" />
+            <Ionicons name="chevron-back" size={16} color="rgba(236,238,242,0.45)" />
             <Text style={styles.navText}>Back</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onNext}>
@@ -85,7 +85,7 @@ export default function ApiKeyScreen({ onNext, onBack }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D2218',
+    backgroundColor: '#101318',
     paddingHorizontal: 28,
     paddingTop: 60,
     paddingBottom: 48,
@@ -100,20 +100,20 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 32,
     fontWeight: '700',
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: 'Helvetica',
     fontSize: 15,
-    color: 'rgba(255,255,240,0.55)',
+    color: 'rgba(236,238,242,0.55)',
     textAlign: 'center',
     marginTop: -8,
   },
   body: {
     fontFamily: 'Helvetica',
     fontSize: 15,
-    color: 'rgba(255,255,240,0.75)',
+    color: 'rgba(236,238,242,0.75)',
     lineHeight: 22,
     textAlign: 'center',
   },
@@ -124,11 +124,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#162E20',
+    backgroundColor: '#181D25',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#1E5038',
-    color: '#FFFFF0',
+    borderColor: '#20262E',
+    color: '#ECEEF2',
     fontFamily: 'Helvetica',
     fontSize: 15,
     paddingHorizontal: 14,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButton: {
-    backgroundColor: '#1A3828',
+    backgroundColor: '#181D25',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFF0',
+    color: '#ECEEF2',
   },
   navRow: {
     flexDirection: 'row',
@@ -171,6 +171,6 @@ const styles = StyleSheet.create({
   navText: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: 'rgba(255,255,240,0.45)',
+    color: 'rgba(236,238,242,0.45)',
   },
 });

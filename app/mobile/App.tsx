@@ -248,7 +248,7 @@ export default function App() {
   }
 
   if (onboardingStep === 'checking') {
-    return <View style={{ flex: 1, backgroundColor: '#0D2218' }} />;
+    return <View style={{ flex: 1, backgroundColor: '#101318' }} />;
   }
   if (onboardingStep === 'welcome') {
     return <WelcomeScreen onNext={() => setOnboardingStep('apikey')} />;
@@ -316,14 +316,14 @@ export default function App() {
           </View>
         )}
         {loading && !hasLoaded && (
-          <ActivityIndicator color="#FFFFF0" style={{ marginBottom: 12 }} />
+          <ActivityIndicator color="#ECEEF2" style={{ marginBottom: 12 }} />
         )}
         {currentCoords && factCount !== null ? (
           <TouchableOpacity
             style={styles.infoBar}
             onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${currentCoords.lat},${currentCoords.lon}`)}
           >
-            <Ionicons name="navigate-outline" size={12} color="rgba(255,255,225,0.4)" style={{ marginRight: 5 }} />
+            <Ionicons name="navigate-outline" size={12} color="rgba(236,238,242,0.4)" style={{ marginRight: 5 }} />
             <Text style={[styles.infoBarText, { flex: 1 }]}>{locationLabel || 'Current Location'}</Text>
             <Text style={styles.infoBarStats}>{displayedFacts.length} {displayedFacts.length === 1 ? 'fact' : 'facts'} · {radiusLabel}</Text>
           </TouchableOpacity>
@@ -343,8 +343,8 @@ export default function App() {
                 onValueChange={setRadius}
                 onSlidingComplete={setSynthRadius}
                 minimumTrackTintColor="#2A9D8F"
-                maximumTrackTintColor="#1E5038"
-                thumbTintColor="#FFFFF0"
+                maximumTrackTintColor="#20262E"
+                thumbTintColor="#ECEEF2"
               />
               <Text style={styles.sliderEndLabel}>3 km</Text>
             </View>
@@ -382,12 +382,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D2218',
+    backgroundColor: '#101318',
   },
   devBar: {
     flexGrow: 0,
     flexShrink: 0,
-    backgroundColor: '#050F0A',
+    backgroundColor: '#0A0C10',
   },
   devBarContent: {
     paddingHorizontal: 8,
@@ -447,13 +447,13 @@ const styles = StyleSheet.create({
     width: 20,
     height: 2,
     borderRadius: 1,
-    backgroundColor: '#FFFFF0',
+    backgroundColor: '#ECEEF2',
   },
   status: {
     fontFamily: 'Helvetica',
     fontSize: 15,
     fontWeight: '600',
-    color: 'rgba(255, 255, 225, 0.85)',
+    color: 'rgba(236, 238, 242, 0.85)',
     textAlign: 'center',
   },
   infoBar: {
@@ -462,21 +462,21 @@ const styles = StyleSheet.create({
     marginHorizontal: -20,
     paddingHorizontal: 20,
     paddingVertical: 11,
-    backgroundColor: '#1A3828',
+    backgroundColor: '#181D25',
     marginBottom: 8,
   },
   infoBarText: {
     fontFamily: 'Helvetica',
     fontSize: 15,
     fontWeight: '600',
-    color: 'rgba(255, 255, 225, 0.85)',
+    color: 'rgba(236, 238, 242, 0.85)',
     letterSpacing: 0.1,
   },
   infoBarStats: {
     fontFamily: 'Helvetica',
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgba(255, 255, 225, 0.72)',
+    color: 'rgba(236, 238, 242, 0.72)',
     letterSpacing: 0.1,
   },
   sliderContainer: {
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   sliderEndLabel: {
     fontFamily: 'Helvetica',
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(236,238,242,0.5)',
     width: 32,
     textAlign: 'center',
   },

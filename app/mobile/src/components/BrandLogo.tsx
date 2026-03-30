@@ -18,12 +18,12 @@ function GlobeIcon({ r }: { r: number }) {
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       {/* Outer circle */}
-      <Circle cx={cx} cy={cy} r={r} stroke="#FFFFF0" strokeWidth={1.5} fill="none" />
+      <Circle cx={cx} cy={cy} r={r} stroke="#ECEEF2" strokeWidth={1.5} fill="none" />
       {/* Latitude lines */}
-      <Ellipse cx={cx} cy={cy - r * 0.3} rx={r * 0.95} ry={r * 0.25} stroke="#FFFFF0" strokeWidth={1} fill="none" />
-      <Ellipse cx={cx} cy={cy + r * 0.3} rx={r * 0.95} ry={r * 0.25} stroke="#FFFFF0" strokeWidth={1} fill="none" />
+      <Ellipse cx={cx} cy={cy - r * 0.3} rx={r * 0.95} ry={r * 0.25} stroke="#ECEEF2" strokeWidth={1} fill="none" />
+      <Ellipse cx={cx} cy={cy + r * 0.3} rx={r * 0.95} ry={r * 0.25} stroke="#ECEEF2" strokeWidth={1} fill="none" />
       {/* Longitude arc */}
-      <Ellipse cx={cx} cy={cy} rx={r * 0.42} ry={r} stroke="#FFFFF0" strokeWidth={1} fill="none" />
+      <Ellipse cx={cx} cy={cy} rx={r * 0.42} ry={r} stroke="#ECEEF2" strokeWidth={1} fill="none" />
       {/* Teal accent at lower-left */}
       <Ellipse cx={cx - r * 0.35} cy={cy + r * 0.45} rx={r * 0.28} ry={r * 0.18} fill="#2A9D8F" />
     </Svg>
@@ -35,7 +35,7 @@ export default function BrandLogo({ size = 'md' }: { size?: Size }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap }}>
       <GlobeIcon r={r} />
-      <Text style={{ fontFamily: 'Helvetica', fontSize, fontWeight: '700', color: '#FFFFF0', letterSpacing: -0.5 }}>
+      <Text style={{ fontFamily: 'Helvetica', fontSize, fontWeight: '700', color: '#ECEEF2', letterSpacing: -0.5 }}>
         Geolore
       </Text>
     </View>

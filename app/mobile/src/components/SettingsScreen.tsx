@@ -132,8 +132,8 @@ export default function SettingsScreen({ visible, interests, notifSettings, disp
             value={display.maxFacts}
             onValueChange={(v) => setDisplay({ ...display, maxFacts: Math.round(v) })}
             minimumTrackTintColor="#2A9D8F"
-            maximumTrackTintColor="#1E5038"
-            thumbTintColor="#FFFFF0"
+            maximumTrackTintColor="#20262E"
+            thumbTintColor="#ECEEF2"
           />
 
           <Text style={styles.sectionLabel}>NOTIFICATIONS</Text>
@@ -143,8 +143,8 @@ export default function SettingsScreen({ visible, interests, notifSettings, disp
             <Switch
               value={notif.enabled}
               onValueChange={handleWalkAroundToggle}
-              trackColor={{ false: '#1E5038', true: '#2A9D8F' }}
-              thumbColor="#FFFFF0"
+              trackColor={{ false: '#20262E', true: '#2A9D8F' }}
+              thumbColor="#ECEEF2"
             />
           </View>
 
@@ -190,7 +190,7 @@ export default function SettingsScreen({ visible, interests, notifSettings, disp
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D2218',
+    backgroundColor: '#101318',
   },
   header: {
     flexDirection: 'row',
@@ -199,14 +199,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E5038',
+    borderBottomColor: '#20262E',
   },
   closeBtn: {
     padding: 8,
   },
   closeText: {
     fontSize: 18,
-    color: 'rgba(255,255,240,0.55)',
+    color: 'rgba(236,238,242,0.55)',
   },
   scroll: {
     paddingHorizontal: 24,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255,255,240,0.4)',
+    color: 'rgba(236,238,242,0.4)',
     letterSpacing: 1.2,
     marginTop: 24,
     marginBottom: 12,
@@ -231,20 +231,20 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1E5038',
+    borderColor: '#20262E',
     backgroundColor: 'transparent',
   },
   chipActive: {
-    backgroundColor: '#374635',
-    borderColor: '#374635',
+    backgroundColor: '#20262E',
+    borderColor: '#20262E',
   },
   chipText: {
     fontFamily: 'Helvetica',
     fontSize: 12,
-    color: 'rgba(255,255,240,0.55)',
+    color: 'rgba(236,238,242,0.55)',
   },
   chipTextActive: {
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     fontWeight: '600',
   },
   row: {
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontFamily: 'Helvetica',
     fontSize: 15,
-    color: '#FFFFF0',
+    color: '#ECEEF2',
   },
   subLabel: {
     fontFamily: 'Helvetica',
     fontSize: 13,
-    color: 'rgba(255,255,240,0.55)',
+    color: 'rgba(236,238,242,0.55)',
     marginBottom: 10,
     marginTop: 4,
   },
@@ -276,23 +276,23 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1E5038',
+    borderColor: '#20262E',
   },
   segActive: {
-    backgroundColor: '#374635',
-    borderColor: '#374635',
+    backgroundColor: '#20262E',
+    borderColor: '#20262E',
   },
   segText: {
     fontFamily: 'Helvetica',
     fontSize: 13,
-    color: 'rgba(255,255,240,0.55)',
+    color: 'rgba(236,238,242,0.55)',
   },
   segTextActive: {
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     fontWeight: '600',
   },
   saveBtn: {
-    backgroundColor: '#1A3828',
+    backgroundColor: '#181D25',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -302,6 +302,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFF0',
+    color: '#ECEEF2',
   },
 });

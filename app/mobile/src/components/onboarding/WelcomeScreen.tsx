@@ -22,7 +22,7 @@ export default function WelcomeScreen({ onNext }: Props) {
         <View style={styles.features}>
           {FEATURES.map((f) => (
             <View key={f.icon} style={styles.featureRow}>
-              <Ionicons name={f.icon} size={20} color="rgba(255,255,240,0.7)" style={styles.iconStyle} />
+              <Ionicons name={f.icon} size={20} color="rgba(236,238,242,0.7)" style={styles.iconStyle} />
               <Text style={styles.featureText}>{f.text}</Text>
             </View>
           ))}
@@ -38,7 +38,7 @@ export default function WelcomeScreen({ onNext }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D2218',
+    backgroundColor: '#101318',
     paddingHorizontal: 28,
     paddingTop: 60,
     paddingBottom: 48,
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 14,
     fontStyle: 'italic',
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     textAlign: 'center',
   },
   features: {
@@ -76,12 +76,12 @@ const styles = StyleSheet.create({
   featureText: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: 'rgba(255,255,240,0.85)',
+    color: 'rgba(236,238,242,0.85)',
     lineHeight: 20,
     flex: 1,
   },
   button: {
-    backgroundColor: '#1A3828',
+    backgroundColor: '#181D25',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -90,6 +90,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFF0',
+    color: '#ECEEF2',
   },
 });

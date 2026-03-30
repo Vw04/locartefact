@@ -55,7 +55,7 @@ export default function InterestsScreen({ onDone, onBack }: Props) {
                   style={[styles.chip, active && styles.chipActive]}
                   onPress={() => toggle(label)}
                 >
-                  <Ionicons name={icon} size={36} color="#FFFFF0" />
+                  <Ionicons name={icon} size={36} color="#ECEEF2" />
                   <Text style={[styles.chipText, active && styles.chipTextActive]}>
                     {label}
                   </Text>
@@ -70,7 +70,7 @@ export default function InterestsScreen({ onDone, onBack }: Props) {
           <Text style={styles.buttonText}>Start Exploring</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={16} color="rgba(255,255,240,0.55)" />
+          <Ionicons name="chevron-back" size={16} color="rgba(236,238,242,0.55)" />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
       </View>
@@ -81,7 +81,7 @@ export default function InterestsScreen({ onDone, onBack }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D2218',
+    backgroundColor: '#101318',
     paddingHorizontal: 28,
     paddingTop: 100,
     paddingBottom: 48,
@@ -94,12 +94,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFF0',
+    color: '#ECEEF2',
   },
   subtitle: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: 'rgba(255,255,240,0.65)',
+    color: 'rgba(236,238,242,0.65)',
     lineHeight: 20,
   },
   grid: {
@@ -122,21 +122,21 @@ const styles = StyleSheet.create({
     minHeight: 90,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#374635',
-    backgroundColor: '#1A3828',
+    borderColor: '#20262E',
+    backgroundColor: '#181D25',
   },
   chipActive: {
-    backgroundColor: '#374635',
-    borderColor: '#374635',
+    backgroundColor: '#20262E',
+    borderColor: '#20262E',
   },
   chipText: {
     fontFamily: 'Helvetica',
     fontSize: 16,
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     textAlign: 'center',
   },
   chipTextActive: {
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     fontWeight: '600',
   },
   footer: {
@@ -151,10 +151,10 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: 'Helvetica',
     fontSize: 14,
-    color: 'rgba(255,255,240,0.55)',
+    color: 'rgba(236,238,242,0.55)',
   },
   button: {
-    backgroundColor: '#1A3828',
+    backgroundColor: '#181D25',
     paddingVertical: 16,
     borderRadius: 14,
     width: '100%',
@@ -164,6 +164,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFF0',
+    color: '#ECEEF2',
   },
 });

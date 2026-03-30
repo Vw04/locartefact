@@ -70,7 +70,7 @@ export default function FactCard({ fact }: Props) {
           <Text style={styles.expandedLabel}>Full article summary</Text>
           <Text style={styles.extract}>{fact.extract}</Text>
           <TouchableOpacity onPress={openWikipedia} style={styles.articleLink}>
-            <Ionicons name="open-outline" size={13} color="rgba(255,251,188,0.6)" />
+            <Ionicons name="open-outline" size={13} color="rgba(232,184,75,0.65)" />
             <Text style={styles.articleLinkText}>Read full article</Text>
           </TouchableOpacity>
         </View>
@@ -84,7 +84,7 @@ export default function FactCard({ fact }: Props) {
       <View style={[styles.buttonRow, !fact.hasGeoData && styles.buttonRowNoMap]}>
         {fact.hasGeoData && (
           <TouchableOpacity onPress={openMaps} style={styles.footerBtn}>
-            <Ionicons name="map-outline" size={15} color="rgba(255,251,188,0.6)" />
+            <Ionicons name="map-outline" size={15} color="rgba(232,184,75,0.65)" />
             <Text style={styles.linkText}>Map</Text>
           </TouchableOpacity>
         )}
@@ -98,7 +98,7 @@ export default function FactCard({ fact }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#374635',
+    backgroundColor: '#20262E',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -108,18 +108,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 4,
-    color: '#FFFFF0',
+    color: '#ECEEF2',
   },
   distance: {
     fontFamily: 'Helvetica',
     fontSize: 13,
-    color: '#FFFFF0',
+    color: '#E8B84B',
     marginBottom: 6,
   },
   extract: {
     fontFamily: 'Helvetica',
     fontSize: 15,
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     lineHeight: 22,
   },
   thumbnailWrap: {
@@ -151,19 +151,19 @@ const styles = StyleSheet.create({
   factText: {
     fontFamily: 'Helvetica',
     fontSize: 15,
-    color: '#FFFFF0',
+    color: '#ECEEF2',
     lineHeight: 22,
   },
   expandedSection: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.2)',
+    borderTopColor: 'rgba(255,255,255,0.15)',
   },
   expandedLabel: {
     fontFamily: 'Helvetica',
     fontSize: 11,
-    color: 'rgba(255,255,240,0.5)',
+    color: 'rgba(236,238,242,0.5)',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 6,
@@ -178,13 +178,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 13,
     fontWeight: '500',
-    color: 'rgba(255,251,188,0.6)',
+    color: 'rgba(232,184,75,0.65)',
     letterSpacing: 0.3,
   },
   expandHint: {
     fontFamily: 'Helvetica',
     fontSize: 12,
-    color: 'rgba(255,255,240,0.35)',
+    color: 'rgba(236,238,242,0.35)',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingHorizontal: 4,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   buttonRowNoMap: {
     justifyContent: 'flex-end',
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 13,
     fontWeight: '500',
-    color: 'rgba(255,251,188,0.6)',
+    color: 'rgba(232,184,75,0.65)',
     letterSpacing: 0.3,
   },
 });
